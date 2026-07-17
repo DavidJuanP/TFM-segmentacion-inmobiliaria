@@ -20,10 +20,8 @@ build/
 .env.*
 !.env.example
 
-# AWS credentials
+# AWS local configuration
 .aws/
-credentials
-config
 
 # Data - no subir datos reales
 data/raw/
@@ -39,6 +37,13 @@ outputs/reports/
 # Logs
 logs/
 *.log
+
+# Testing and code quality
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
 # IDE / OS
 .vscode/
