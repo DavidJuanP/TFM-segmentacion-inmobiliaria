@@ -33,16 +33,6 @@ Resources:
         Rules:
           - ObjectOwnership: BucketOwnerEnforced
 
-      Tags:
-        - Key: Project
-          Value: !Ref ProjectName
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Layer
-          Value: raw
-        - Key: ManagedBy
-          Value: CloudFormation
-
   RawDataBucketPolicy:
     Type: AWS::S3::BucketPolicy
     Properties:
