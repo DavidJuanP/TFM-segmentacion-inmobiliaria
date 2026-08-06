@@ -10,7 +10,7 @@ URL = (
 )
 
 RUTA_SALIDA = Path(
-    "data/raw/ign/municipios/IGN_INFOGEO_MUNICIPIOS.xlsx"
+    "data/raw/ign/municipios.xlsx"
 )
 
 

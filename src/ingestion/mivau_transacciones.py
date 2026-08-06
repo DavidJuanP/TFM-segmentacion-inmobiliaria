@@ -9,7 +9,7 @@ URL = (
 )
 
 RUTA_SALIDA = Path(
-    "data/raw/mivau/transacciones/VDP003_01.csv"
+    "data/raw/mivau/transacciones.csv"
 )
 
 

@@ -1,0 +1,79 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  Infraestructura en AWS del TFM de segmentacion inmobiliaria.
+  Autor: David Juan Pascasio
+
+
+Resources:
+
+  RawDataBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+
+    Properties:
+      BucketName: !Sub "s3-TFM-raw-${AWS::AccountId}-${AWS::Region}"
+
+      VersioningConfiguration:
+        Status: Enabled
+
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+
+      Tags:
+        - Key: Project
+          Value: !Ref ProjectName
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Layer
+          Value: raw
+        - Key: ManagedBy
+          Value: CloudFormation
+
+  RawDataBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref RawDataBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt RawDataBucket.Arn
+              - !Sub "${RawDataBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+Outputs:
+  RawDataBucketName:
+    Description: Nombre del bucket dedicado a datos raw.
+    Value: !Ref RawDataBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-RawDataBucketName"
+
+  RawDataBucketArn:
+    Description: ARN del bucket dedicado a datos raw.
+    Value: !GetAtt RawDataBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-RawDataBucketArn"
+
+  RawDataUri:
+    Description: URI del bucket de datos raw.
+    Value: !Sub "s3://${RawDataBucket}/"
