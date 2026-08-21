@@ -42,17 +42,26 @@ py -m src.ingestion.download_sources --force
 
 Las descargas se guardan bajo `data/raw/`, que no se versiona en Git.
 
-## Ejemplo de procesamiento
+## Procesamiento
 
-El módulo de población del INE conserva únicamente el total por municipio y
-año, normaliza el código INE y los tipos, valida la clave y escribe un Parquet
-comprimido:
+Cada fuente en crudo dispone de un módulo de limpieza. Todos normalizan los
+tipos, validan su clave natural y escriben un Parquet con compresión Zstandard
+bajo `data/processed/`:
 
 ```powershell
 py -m src.processing.ine_poblacion
+py -m src.processing.ign_municipios
+py -m src.processing.ine_migracion
+py -m src.processing.ine_superficie
+py -m src.processing.ine_viviendas_turisticas
+py -m src.processing.mivau_alquiler
+py -m src.processing.mivau_transacciones
+py -m src.processing.sepe_paro
 ```
 
-El resultado se guarda en `data/processed/ine/poblacion.parquet` con las
-columnas `codigo_ine`, `municipio`, `anio` y `poblacion`. Los valores de
-población que el INE publica vacíos se conservan como nulos; no se imputan
-durante la limpieza.
+Los datos ausentes se conservan como nulos; no se imputan durante la limpieza.
+En el fichero del SEPE, el valor protegido `<5` también se representa como
+nulo, acompañado de una columna booleana `*_censurado` para no perder esa
+información. La fuente de transacciones tiene granularidad provincial y la de
+superficie no incluye código INE, particularidades que se mantienen en sus
+resultados.
