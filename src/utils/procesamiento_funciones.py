@@ -1,5 +1,5 @@
 '''
-Funciones empleadas en distintos scripts de procesamiento de datos.
+Funciones comunes empleadas en distintos scripts de procesamiento de datos.
 
 '''
 

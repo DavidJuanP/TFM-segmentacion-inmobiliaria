@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.processing._common import (
+from src.utils.procesamiento_funciones import (
     convertir_numero_es,
     guardar_parquet,
     separar_municipio_ine,
