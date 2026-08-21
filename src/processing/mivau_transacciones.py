@@ -1,5 +1,7 @@
-"""Normaliza las transacciones inmobiliarias provinciales del MIVAU."""
+'''
+Normaliza las transacciones inmobiliarias provinciales del MIVAU.
 
+'''
 from pathlib import Path
 
 import pandas as pd

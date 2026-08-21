@@ -1,4 +1,7 @@
-"""Utilidades compartidas por los procesos de limpieza."""
+'''
+Funciones empleadas en distintos scripts de procesamiento de datos.
+
+'''
 
 from collections.abc import Iterable, Sequence
 from pathlib import Path
@@ -7,7 +10,7 @@ import pandas as pd
 
 
 def validar_columnas(df: pd.DataFrame, columnas: Iterable[str]) -> None:
-    """Comprueba que el origen contiene todas las columnas esperadas."""
+    # Comprueba que el origen contiene todas las columnas esperadas
     faltantes = set(columnas).difference(df.columns)
     if faltantes:
         raise ValueError(
@@ -24,7 +27,7 @@ def convertir_numero_es(
     nulos_adicionales: Iterable[str] = (),
     decimal_coma: bool = True,
 ) -> pd.Series:
-    """Convierte números localizados sin imputar sus valores ausentes."""
+    # Convierte números localizados sin imputar sus valores ausentes
     texto = serie.astype("string").str.strip()
     marcadores_nulos = {"", "..", *nulos_adicionales}
     texto = texto.mask(texto.isin(marcadores_nulos))
@@ -58,7 +61,7 @@ def convertir_numero_es(
 
 
 def separar_municipio_ine(serie: pd.Series) -> tuple[pd.Series, pd.Series]:
-    """Separa una etiqueta del INE con formato ``12345 Nombre``."""
+    # Separa una etiqueta del INE con formato '12345 Nombre'
     texto = serie.astype("string").str.strip()
     codigo = texto.str.extract(r"^(\d{5})\s+", expand=False).str.zfill(5)
     municipio = texto.str.replace(r"^\d{5}\s+", "", regex=True).str.strip()
@@ -66,10 +69,8 @@ def separar_municipio_ine(serie: pd.Series) -> tuple[pd.Series, pd.Series]:
     return codigo, municipio
 
 
-def validar_claves(
-    df: pd.DataFrame, claves: Sequence[str], *, nombre: str = "resultado"
-) -> None:
-    """Valida que una clave esté completa y sea única."""
+def validar_claves(df: pd.DataFrame, claves: Sequence[str], *, nombre: str = "resultado") -> None:
+    # Valida que no haya claves incompletas ni duplicadas
     incompletas = df[list(claves)].isna().any(axis=1)
     if incompletas.any():
         ejemplos = df.loc[incompletas, list(claves)].head(5).to_dict("records")
@@ -88,7 +89,7 @@ def validar_claves(
 
 
 def guardar_parquet(df: pd.DataFrame, ruta: Path) -> None:
-    """Crea el directorio de destino y escribe un Parquet Zstandard."""
+    # Crea la carpeta de destino y guarda el DataFrame en formato Parquet
     destino = Path(ruta)
     destino.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(

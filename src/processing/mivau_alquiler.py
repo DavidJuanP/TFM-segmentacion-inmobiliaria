@@ -1,4 +1,7 @@
-"""Normaliza los indicadores municipales de alquiler del MIVAU."""
+'''
+Normaliza los indicadores municipales de alquiler del MIVAU.
+
+'''
 
 from pathlib import Path
 

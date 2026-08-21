@@ -1,3 +1,8 @@
+'''
+Función empleada para descargar archivos desde una URL y guardarlos localmente.
+
+'''
+
 from pathlib import Path
 
 import requests

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.utils.download import descargar_archivo
+from src.utils.descargar_archivo import descargar_archivo
 
 
 URL = (
