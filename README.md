@@ -1,3 +1,5 @@
+# SUCIO
+
 # TFM-segmentacion-inmobiliaria
 
 ## Preparación del entorno
