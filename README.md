@@ -41,3 +41,18 @@ py -m src.ingestion.download_sources --force
 ```
 
 Las descargas se guardan bajo `data/raw/`, que no se versiona en Git.
+
+## Ejemplo de procesamiento
+
+El módulo de población del INE conserva únicamente el total por municipio y
+año, normaliza el código INE y los tipos, valida la clave y escribe un Parquet
+comprimido:
+
+```powershell
+py -m src.processing.ine_poblacion
+```
+
+El resultado se guarda en `data/processed/ine/poblacion.parquet` con las
+columnas `codigo_ine`, `municipio`, `anio` y `poblacion`. Los valores de
+población que el INE publica vacíos se conservan como nulos; no se imputan
+durante la limpieza.
