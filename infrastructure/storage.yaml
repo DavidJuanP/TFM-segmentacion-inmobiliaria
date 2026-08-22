@@ -97,7 +97,50 @@ Resources:
               Bool:
                 aws:SecureTransport: false
 
+  # ProcessedDataBucket: Bucket de S3 para almacenar datos procesados
+  ScriptsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
 
+    Properties:
+      BucketName: !Sub "s3-tfm-scripts-${AWS::AccountId}-${AWS::Region}"
+
+      VersioningConfiguration:
+        Status: Enabled
+
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+
+  ScriptsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ScriptsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt ScriptsBucket.Arn
+              - !Sub "${ScriptsBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
 Outputs:
 
@@ -133,3 +176,19 @@ Outputs:
   ProcessedDataUri:
     Description: URI del bucket de datos procesados.
     Value: !Sub "s3://${ProcessedDataBucket}/"
+
+  ScriptsBucketName:
+    Description: Nombre del bucket dedicado a scripts.
+    Value: !Ref ScriptsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ScriptsBucketName"
+
+  ScriptsBucketArn:
+    Description: ARN del bucket dedicado a scripts.
+    Value: !GetAtt ScriptsBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ScriptsBucketArn"
+
+  ScriptsUri:
+    Description: URI del bucket de scripts.
+    Value: !Sub "s3://${ScriptsBucket}/"
