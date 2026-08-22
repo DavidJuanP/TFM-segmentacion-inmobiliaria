@@ -161,7 +161,7 @@ Outputs:
     Value: !Sub "s3://${RawDataBucket}/"
 
 
-  ProcessedataBucketName:
+  ProcessedDataBucketName:
     Description: Nombre del bucket dedicado a datos procesados.
     Value: !Ref ProcessedDataBucket
     Export:
