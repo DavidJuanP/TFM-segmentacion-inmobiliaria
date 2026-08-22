@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
-  Infraestructura en AWS del TFM de segmentacion inmobiliaria.
+  Infraestructura de almacenamiento en AWS del TFM de segmentacion inmobiliaria.
   Autor: David Juan Pascasio
 
 
