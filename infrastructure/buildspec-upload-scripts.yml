@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  build:
+    commands:
+      - echo "Subiendo scripts a S3"
+      - aws s3 sync src/ingestion/ s3://$SCRIPTS_BUCKET/ingestion/ --delete
+      - aws s3 sync src/processing/ s3://$SCRIPTS_BUCKET/processing/ --delete
+      - echo "Scripts subidos correctamente"
