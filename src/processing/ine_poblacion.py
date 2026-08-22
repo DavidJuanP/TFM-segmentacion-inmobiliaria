@@ -30,20 +30,15 @@ def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
 
 
 def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
-    # El fichero contiene Total, Hombres y Mujeres. Para obtener una sola fila
-    # por municipio y año conservamos exclusivamente la población total.
+    # El fichero contiene Total, Hombres y Mujeres. Conservamos exclusivamente la población total.
     resultado = df.loc[
         df["Sexo"].str.strip().str.casefold().eq("total"),
         ["Municipios", "Periodo", "Total"],
     ].copy()
 
-    resultado["codigo_ine"], resultado["municipio"] = separar_municipio_ine(
-        resultado["Municipios"]
-    )
+    resultado["codigo_ine"], resultado["municipio"] = separar_municipio_ine(resultado["Municipios"])
     resultado["anio"] = pd.to_numeric(resultado["Periodo"], errors="coerce")
-    resultado["poblacion"] = convertir_numero_es(
-        resultado["Total"], "Total", entero=True
-    )
+    resultado["poblacion"] = convertir_numero_es(resultado["Total"], "Total", entero=True)
 
     columnas = ["codigo_ine", "municipio", "anio", "poblacion"]
     resultado = resultado[columnas]

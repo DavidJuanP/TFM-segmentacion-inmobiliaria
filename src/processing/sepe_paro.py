@@ -1,4 +1,4 @@
-'''Limpia el paro mensual municipal del SEPE y conserva la censura ``<5``.
+'''Limpia el paro mensual municipal del SEPE y conserva la censura.
 
 '''
 
