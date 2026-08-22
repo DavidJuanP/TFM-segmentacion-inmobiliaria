@@ -13,7 +13,7 @@ Resources:
     UpdateReplacePolicy: Retain
 
     Properties:
-      BucketName: !Sub "s3-tfm-raw-${AWS::AccountId}-${AWS::Region}"
+      BucketName: !Sub "s3-tfm-raw-data-${AWS::AccountId}-${AWS::Region}"
 
       VersioningConfiguration:
         Status: Enabled
