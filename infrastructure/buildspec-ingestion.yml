@@ -13,7 +13,6 @@ phases:
       - python -m src.ingestion.ign_municipios
       - python -m src.ingestion.ine_poblacion
       - python -m src.ingestion.ine_migracion
-      - python -m src.ingestion.ine_superficie
       - python -m src.ingestion.ine_viviendas_turisticas
       - python -m src.ingestion.mivau_alquiler
       - python -m src.ingestion.mivau_transacciones
