@@ -9,6 +9,13 @@ phases:
 
   build:
     commands:
-      - echo "Iniciando ingesta IGN"
+      - echo "Iniciando ingesta de datos raw"
       - python -m src.ingestion.ign_municipios
-      - echo "Ingesta IGN finalizada"
+      - python -m src.ingestion.ine_poblacion
+      - python -m src.ingestion.ine_migracion
+      - python -m src.ingestion.ine_superficie
+      - python -m src.ingestion.ine_viviendas_turisticas
+      - python -m src.ingestion.mivau_alquiler
+      - python -m src.ingestion.mivau_transacciones
+      - python -m src.ingestion.sepe_paro
+      - echo "Ingesta de datos raw finalizada"
