@@ -17,7 +17,9 @@ phases:
       - python -m src.ingestion.ine_renta
       - python -m src.ingestion.ine_tamanio_hogar
       - python -m src.ingestion.ine_viviendas_turisticas
+      - python -m src.ingestion.ine_viviendas
       - python -m src.ingestion.mir_criminalidad
+      - python -m src.ingestion.mir_okupacion
       - python -m src.ingestion.mivau_alquiler
       - python -m src.ingestion.mivau_transacciones
       - python -m src.ingestion.sepe_paro
