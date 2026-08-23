@@ -59,8 +59,11 @@ py -m src.processing.ine_renta
 py -m src.processing.ine_superficie
 py -m src.processing.ine_tamanio_hogar
 py -m src.processing.ine_viviendas_turisticas
+py -m src.processing.ine_viviendas
 py -m src.processing.mivau_alquiler
 py -m src.processing.mivau_transacciones
+py -m src.processing.mir_criminalidad
+py -m src.processing.mir_okupacion
 py -m src.processing.sepe_paro
 ```
 

@@ -11,10 +11,13 @@ phases:
     commands:
       - echo "Iniciando ingesta de datos raw"
       - python -m src.ingestion.ign_municipios
-      - python -m src.ingestion.ine_poblacion
+      - python -m src.ingestion.ine_edad
       - python -m src.ingestion.ine_migracion
-      - python -m src.ingestion.ine_viviendas_turisticas
+      - python -m src.ingestion.ine_poblacion
       - python -m src.ingestion.ine_renta
+      - python -m src.ingestion.ine_tamanio_hogar
+      - python -m src.ingestion.ine_viviendas_turisticas
+      - python -m src.ingestion.mir_criminalidad
       - python -m src.ingestion.mivau_alquiler
       - python -m src.ingestion.mivau_transacciones
       - python -m src.ingestion.sepe_paro
