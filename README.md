@@ -54,6 +54,7 @@ bajo `data/processed/`:
 py -m src.processing.ine_poblacion
 py -m src.processing.ign_municipios
 py -m src.processing.ine_migracion
+py -m src.processing.ine_renta
 py -m src.processing.ine_superficie
 py -m src.processing.ine_viviendas_turisticas
 py -m src.processing.mivau_alquiler
