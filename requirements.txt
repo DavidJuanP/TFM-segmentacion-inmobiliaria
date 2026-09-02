@@ -3,12 +3,14 @@ numpy
 requests
 pyarrow
 openpyxl
+xlrd
 python-dotenv
 
 scikit-learn
 scipy
 
 matplotlib
+basemap
 plotly
 folium
 

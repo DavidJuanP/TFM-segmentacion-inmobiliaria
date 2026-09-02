@@ -51,6 +51,7 @@ tipos, validan su clave natural y escriben un Parquet con compresión Zstandard
 bajo `data/processed/`:
 
 ```powershell
+py -m src.processing.catastro_urbana
 py -m src.processing.ine_poblacion
 py -m src.processing.ign_municipios
 py -m src.processing.ine_edad
@@ -64,6 +65,7 @@ py -m src.processing.mivau_alquiler
 py -m src.processing.mivau_transacciones
 py -m src.processing.mir_criminalidad
 py -m src.processing.mir_okupacion
+py -m src.processing.mit_distancia_costa
 py -m src.processing.sepe_paro
 ```
 
