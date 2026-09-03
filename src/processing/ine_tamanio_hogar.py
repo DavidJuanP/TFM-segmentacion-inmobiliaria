@@ -3,21 +3,28 @@ Calcula el tamaño medio del hogar por municipio a partir de datos del INE.
 
 '''
 
+import os
 from pathlib import Path
 
 import pandas as pd
 
 from src.utils.procesamiento_funciones import (
     convertir_numero_es,
+    descargar_archivo_s3,
     guardar_parquet,
     separar_municipio_ine,
+    subir_archivo_s3,
     validar_claves,
     validar_columnas,
 )
 
 
-RUTA_ENTRADA = Path("data/raw/ine/tamanio_hogar.csv")
-RUTA_SALIDA = Path("data/processed/ine/tamanio_hogar.parquet")
+RAW_BUCKET = os.environ["RAW_BUCKET"]
+PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
+S3_KEY_ENTRADA = "ine/tamanio_hogar.csv"
+S3_KEY_SALIDA = "ine/tamanio_hogar.parquet"
+RUTA_ENTRADA = Path("/tmp/raw/ine/tamanio_hogar.csv")
+RUTA_SALIDA = Path("/tmp/processed/ine/tamanio_hogar.parquet")
 COLUMNAS_RAW = {"Municipio", "Tamaño del hogar", "Total"}
 TAMANIOS = {
     "1 persona": 1,
@@ -120,16 +127,20 @@ def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
 
 
 def main() -> None:
+    descargar_archivo_s3(RAW_BUCKET, S3_KEY_ENTRADA, RUTA_ENTRADA)
     df_raw = leer_datos()
     df_limpio = procesar_datos(df_raw)
     guardar_datos(df_limpio)
+    salida_s3 = subir_archivo_s3(
+        RUTA_SALIDA, PROCESSED_BUCKET, S3_KEY_SALIDA
+    )
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Municipios guardados: {len(df_limpio):,}")
     print(
         "Tamaños medios ausentes: "
         f"{df_limpio['tamanio_medio_hogar'].isna().sum():,}"
     )
-    print(f"Salida: {RUTA_SALIDA}")
+    print(f"Salida: {salida_s3}")
 
 
 if __name__ == "__main__":

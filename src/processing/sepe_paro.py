@@ -2,20 +2,27 @@
 
 '''
 
+import os
 from pathlib import Path
 
 import pandas as pd
 
 from src.utils.procesamiento_funciones import (
     convertir_numero_es,
+    descargar_archivo_s3,
     guardar_parquet,
+    subir_archivo_s3,
     validar_claves,
     validar_columnas,
 )
 
 
-RUTA_ENTRADA = Path("data/raw/sepe/paro.csv")
-RUTA_SALIDA = Path("data/processed/sepe/paro.parquet")
+RAW_BUCKET = os.environ["RAW_BUCKET"]
+PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
+S3_KEY_ENTRADA = "sepe/paro.csv"
+S3_KEY_SALIDA = "sepe/paro.parquet"
+RUTA_ENTRADA = Path("/tmp/raw/sepe/paro.csv")
+RUTA_SALIDA = Path("/tmp/processed/sepe/paro.parquet")
 
 IDENTIFICADORES = {
     "Código mes": "codigo_mes",
@@ -119,16 +126,20 @@ def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
 
 
 def main() -> None:
+    descargar_archivo_s3(RAW_BUCKET, S3_KEY_ENTRADA, RUTA_ENTRADA)
     df_raw = leer_datos()
     df_limpio = procesar_datos(df_raw)
     guardar_datos(df_limpio)
+    salida_s3 = subir_archivo_s3(
+        RUTA_SALIDA, PROCESSED_BUCKET, S3_KEY_SALIDA
+    )
     censuradas = df_limpio.filter(like="_censurado").sum().sum()
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
     print(f"Periodos: {df_limpio['periodo'].nunique():,}")
     print(f"Valores censurados (<5): {censuradas:,}")
-    print(f"Salida: {RUTA_SALIDA}")
+    print(f"Salida: {salida_s3}")
 
 
 if __name__ == "__main__":

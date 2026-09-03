@@ -3,6 +3,7 @@ Calcula la distancia de cada municipio a la costa.
 
 '''
 
+import os
 from pathlib import Path
 
 import pandas as pd
@@ -13,14 +14,20 @@ from shapely.ops import transform, unary_union
 
 from src.utils.procesamiento_funciones import (
     convertir_numero_es,
+    descargar_archivo_s3,
     guardar_parquet,
+    subir_archivo_s3,
     validar_claves,
     validar_columnas,
 )
 
 
-RUTA_ENTRADA = Path("data/raw/mit/MUNICIPIOS.csv")
-RUTA_SALIDA = Path("data/processed/mit/distancia_costa.parquet")
+RAW_BUCKET = os.environ["RAW_BUCKET"]
+PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
+S3_KEY_ENTRADA = "mit/MUNICIPIOS.csv"
+S3_KEY_SALIDA = "mit/distancia_costa.parquet"
+RUTA_ENTRADA = Path("/tmp/raw/mit/MUNICIPIOS.csv")
+RUTA_SALIDA = Path("/tmp/processed/mit/distancia_costa.parquet")
 COLUMNAS_RAW = {
     "COD_INE",
     "NOMBRE_ACTUAL",
@@ -150,9 +157,13 @@ def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
 
 
 def main() -> None:
+    descargar_archivo_s3(RAW_BUCKET, S3_KEY_ENTRADA, RUTA_ENTRADA)
     df_raw = leer_datos()
     df_limpio = procesar_datos(df_raw)
     guardar_datos(df_limpio)
+    salida_s3 = subir_archivo_s3(
+        RUTA_SALIDA, PROCESSED_BUCKET, S3_KEY_SALIDA
+    )
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Municipios guardados: {len(df_limpio):,}")
     print(
@@ -163,7 +174,7 @@ def main() -> None:
         "Distancias ausentes: "
         f"{df_limpio['distancia_costa_km'].isna().sum():,}"
     )
-    print(f"Salida: {RUTA_SALIDA}")
+    print(f"Salida: {salida_s3}")
 
 
 if __name__ == "__main__":

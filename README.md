@@ -48,7 +48,16 @@ Las descargas se guardan bajo `data/raw/`, que no se versiona en Git.
 
 Cada fuente en crudo dispone de un módulo de limpieza. Todos normalizan los
 tipos, validan su clave natural y escriben un Parquet con compresión Zstandard
-bajo `data/processed/`:
+en el bucket indicado por `PROCESSED_BUCKET`. Los objetos originales se leen
+del bucket `RAW_BUCKET`, el mismo que utilizan los scripts de ingesta. En AWS,
+ambas variables deben estar definidas en el entorno de ejecución:
+
+```text
+RAW_BUCKET=s3-tfm-raw-data-<cuenta>-<region>
+PROCESSED_BUCKET=s3-tfm-processed-data-<cuenta>-<region>
+```
+
+Los módulos se ejecutan mediante:
 
 ```powershell
 py -m src.processing.catastro_urbana

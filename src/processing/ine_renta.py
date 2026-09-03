@@ -3,21 +3,28 @@ Limpia los indicadores municipales de renta del Atlas del INE.
 
 '''
 
+import os
 from pathlib import Path
 
 import pandas as pd
 
 from src.utils.procesamiento_funciones import (
     convertir_numero_es,
+    descargar_archivo_s3,
     guardar_parquet,
     separar_municipio_ine,
+    subir_archivo_s3,
     validar_claves,
     validar_columnas,
 )
 
 
-RUTA_ENTRADA = Path("data/raw/ine/renta.csv")
-RUTA_SALIDA = Path("data/processed/ine/renta.parquet")
+RAW_BUCKET = os.environ["RAW_BUCKET"]
+PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
+S3_KEY_ENTRADA = "ine/renta.csv"
+S3_KEY_SALIDA = "ine/renta.parquet"
+RUTA_ENTRADA = Path("/tmp/raw/ine/renta.csv")
+RUTA_SALIDA = Path("/tmp/processed/ine/renta.parquet")
 TAMANO_BLOQUE = 250_000
 
 COLUMNAS_RAW = {
@@ -116,16 +123,20 @@ def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
 
 
 def main() -> None:
+    descargar_archivo_s3(RAW_BUCKET, S3_KEY_ENTRADA, RUTA_ENTRADA)
     df_raw = leer_datos()
     df_limpio = procesar_datos(df_raw)
     guardar_datos(df_limpio)
+    salida_s3 = subir_archivo_s3(
+        RUTA_SALIDA, PROCESSED_BUCKET, S3_KEY_SALIDA
+    )
     valores_ausentes = df_limpio[list(METRICAS.values())].isna().sum().sum()
     print(f"Filas municipales leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
     print(f"Años: {df_limpio['anio'].min()}-{df_limpio['anio'].max()}")
     print(f"Valores de renta ausentes: {valores_ausentes:,}")
-    print(f"Salida: {RUTA_SALIDA}")
+    print(f"Salida: {salida_s3}")
 
 
 if __name__ == "__main__":

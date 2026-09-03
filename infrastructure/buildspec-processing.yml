@@ -1,0 +1,28 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      python: 3.11
+    commands:
+      - pip install -r requirements.txt
+
+  build:
+    commands:
+      - echo "Iniciando procesamiento de datos"
+      - python -m src.processing.catastro_urbana
+      - python -m src.processing.ign_municipios
+      - python -m src.processing.ine_edad
+      - python -m src.processing.ine_migracion
+      - python -m src.processing.ine_poblacion
+      - python -m src.processing.ine_renta
+      - python -m src.processing.ine_tamanio_hogar
+      - python -m src.processing.ine_viviendas
+      - python -m src.processing.ine_viviendas_turisticas
+      - python -m src.processing.mir_criminalidad
+      - python -m src.processing.mir_okupacion
+      - python -m src.processing.mit_distancia_costa
+      - python -m src.processing.mivau_alquiler
+      - python -m src.processing.mivau_transacciones
+      - python -m src.processing.sepe_paro
+      - echo "Procesamiento de datos finalizado"

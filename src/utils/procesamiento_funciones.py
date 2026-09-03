@@ -6,7 +6,38 @@ Funciones comunes empleadas en distintos scripts de procesamiento de datos.
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 
+import boto3
 import pandas as pd
+
+
+def descargar_archivo_s3(
+    bucket: str,
+    clave: str,
+    ruta_local: Path,
+) -> Path:
+    destino = Path(ruta_local)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    boto3.client("s3").download_file(bucket, clave, str(destino))
+    if not destino.is_file() or destino.stat().st_size == 0:
+        raise ValueError(
+            f"El objeto descargado está vacío: s3://{bucket}/{clave}"
+        )
+    print(f"Archivo descargado: s3://{bucket}/{clave}")
+    return destino
+
+
+def subir_archivo_s3(
+    ruta_local: Path,
+    bucket: str,
+    clave: str,
+) -> str:
+    origen = Path(ruta_local)
+    if not origen.is_file() or origen.stat().st_size == 0:
+        raise ValueError(f"El archivo que se va a subir está vacío: {origen}")
+    boto3.client("s3").upload_file(str(origen), bucket, clave)
+    uri = f"s3://{bucket}/{clave}"
+    print(f"Archivo subido: {uri}")
+    return uri
 
 
 def validar_columnas(df: pd.DataFrame, columnas: Iterable[str]) -> None:
