@@ -1,69 +1,395 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: >
-  Infraestructura en AWS del TFM de segmentacion inmobiliaria.
-  Autor: David Juan Pascasio
+Description: Jobs de AWS Glue para ejecutar los scripts de procesamiento del TFM.
 
+Parameters:
+  ProjectName:
+    Type: String
+    Default: tfm
+    AllowedPattern: "[a-zA-Z0-9-]+"
+
+  RawDataBucketName:
+    Type: String
+    Description: Bucket S3 que contiene los datos en crudo.
+
+  ProcessedDataBucketName:
+    Type: String
+    Description: Bucket S3 donde se guardan los datos procesados.
+
+  ScriptsBucketName:
+    Type: String
+    Description: Bucket S3 que contiene los scripts de procesamiento.
+
+  CommonPythonModules:
+    Type: String
+    Default: "pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
+
+  GeoPythonModules:
+    Type: String
+    Default: "basemap==1.3.9,pyproj==3.6.1,shapely==2.0.7"
 
 Resources:
-
-  RawDataBucket:
-    Type: AWS::S3::Bucket
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-
+  GlueProcessingRole:
+    Type: AWS::IAM::Role
     Properties:
-      BucketName: !Sub "s3-tfm-raw-data-${AWS::AccountId}-${AWS::Region}"
-
-      VersioningConfiguration:
-        Status: Enabled
-
-      BucketEncryption:
-        ServerSideEncryptionConfiguration:
-          - ServerSideEncryptionByDefault:
-              SSEAlgorithm: AES256
-
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        IgnorePublicAcls: true
-        BlockPublicPolicy: true
-        RestrictPublicBuckets: true
-
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerEnforced
-
-  RawDataBucketPolicy:
-    Type: AWS::S3::BucketPolicy
-    Properties:
-      Bucket: !Ref RawDataBucket
-      PolicyDocument:
+      AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
-          - Sid: DenyInsecureTransport
-            Effect: Deny
-            Principal: "*"
-            Action: "s3:*"
-            Resource:
-              - !GetAtt RawDataBucket.Arn
-              - !Sub "${RawDataBucket.Arn}/*"
-            Condition:
-              Bool:
-                aws:SecureTransport: false
+          - Effect: Allow
+            Principal:
+              Service: glue.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSGlueServiceRole
+      Policies:
+        - PolicyName: acceso-s3-procesamiento
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawDataBucketName}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${ProcessedDataBucketName}"
+                  - !Sub "arn:${AWS::Partition}:s3:::${ScriptsBucketName}"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource:
+                  - !Sub "arn:${AWS::Partition}:s3:::${RawDataBucketName}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${ScriptsBucketName}/*"
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:ListMultipartUploadParts
+                  - s3:PutObject
+                Resource: !Sub "arn:${AWS::Partition}:s3:::${ProcessedDataBucketName}/*"
+
+  CatastroUrbanaJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-catastro-urbana"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/catastro_urbana.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  IgnMunicipiosJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ign-municipios"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ign_municipios.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  IneEdadJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ine-edad"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ine_edad.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  IneMigracionJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ine-migracion"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ine_migracion.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  InePoblacionJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ine-poblacion"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ine_poblacion.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  IneRentaJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ine-renta"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ine_renta.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  IneTamanioHogarJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ine-tamanio-hogar"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ine_tamanio_hogar.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  IneViviendasJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ine-viviendas"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ine_viviendas.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  IneViviendasTuristicasJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-ine-viviendas-turisticas"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/ine_viviendas_turisticas.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MirCriminalidadJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mir-criminalidad"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mir_criminalidad.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MirOkupacionJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mir-okupacion"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mir_okupacion.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MitDistanciaCostaJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mit-distancia-costa"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mit_distancia_costa.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Sub "${CommonPythonModules},${GeoPythonModules}"
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MivauAlquilerJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mivau-alquiler"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mivau_alquiler.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MivauTransaccionesJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mivau-transacciones"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mivau_transacciones.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MivauTransaccionesMunicipalesJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mivau-transacciones-municipales"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mivau_transacciones_municipales.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  SepeParoJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-sepe-paro"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/sepe_paro.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
 
 Outputs:
-  RawDataBucketName:
-    Description: Nombre del bucket dedicado a datos raw.
-    Value: !Ref RawDataBucket
-    Export:
-      Name: !Sub "${AWS::StackName}-RawDataBucketName"
-
-  RawDataBucketArn:
-    Description: ARN del bucket dedicado a datos raw.
-    Value: !GetAtt RawDataBucket.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}-RawDataBucketArn"
-
-  RawDataUri:
-    Description: URI del bucket de datos raw.
-    Value: !Sub "s3://${RawDataBucket}/"
+  GlueProcessingRoleArn:
+    Description: ARN del rol utilizado por los jobs Glue.
+    Value: !GetAtt GlueProcessingRole.Arn
