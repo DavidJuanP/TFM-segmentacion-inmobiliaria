@@ -21,7 +21,6 @@ phases:
       - python -m src.ingestion.mir_criminalidad
       - python -m src.ingestion.mir_okupacion
       - python -m src.ingestion.mivau_alquiler
-      - python -m src.ingestion.mivau_transacciones
       - python -m src.ingestion.mivau_transacciones_municipales
       - python -m src.ingestion.sepe_paro
       - echo "Ingesta de datos raw finalizada"
