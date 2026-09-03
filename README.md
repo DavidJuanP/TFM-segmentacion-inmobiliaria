@@ -72,6 +72,7 @@ py -m src.processing.ine_viviendas_turisticas
 py -m src.processing.ine_viviendas
 py -m src.processing.mivau_alquiler
 py -m src.processing.mivau_transacciones
+py -m src.processing.mivau_transacciones_municipales
 py -m src.processing.mir_criminalidad
 py -m src.processing.mir_okupacion
 py -m src.processing.mit_distancia_costa

@@ -24,5 +24,6 @@ phases:
       - python -m src.processing.mit_distancia_costa
       - python -m src.processing.mivau_alquiler
       - python -m src.processing.mivau_transacciones
+      - python -m src.processing.mivau_transacciones_municipales
       - python -m src.processing.sepe_paro
       - echo "Procesamiento de datos finalizado"
