@@ -1,4 +1,4 @@
-'''Limpia el paro mensual municipal del SEPE y conserva la censura.
+'''Procesa el paro total mensual municipal del SEPE.
 
 '''
 
@@ -34,21 +34,10 @@ IDENTIFICADORES = {
     "Codigo Municipio": "codigo_ine",
     "Municipio": "municipio",
 }
-MEDIDAS = {
-    "total Paro Registrado": "paro_total",
-    "Paro hombre edad < 25": "paro_hombre_menor_25",
-    "Paro hombre edad 25 -45": "paro_hombre_25_44",
-    "Paro hombre edad >=45": "paro_hombre_45_mas",
-    "Paro mujer edad < 25": "paro_mujer_menor_25",
-    "Paro mujer edad 25 -45": "paro_mujer_25_44",
-    "Paro mujer edad >=45": "paro_mujer_45_mas",
-    "Paro Agricultura": "paro_agricultura",
-    "Paro Industria": "paro_industria",
-    "Paro Construcción": "paro_construccion",
-    "Paro Servicios": "paro_servicios",
-    "Paro Sin empleo Anterior": "paro_sin_empleo_anterior",
-}
-COLUMNAS_RAW = {*IDENTIFICADORES, *MEDIDAS}
+COLUMNA_PARO_TOTAL = "total Paro Registrado"
+ANIO_MEDIA = 2025
+MESES_ANIO = 12
+COLUMNAS_RAW = {*IDENTIFICADORES, COLUMNA_PARO_TOTAL}
 
 
 def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
@@ -65,7 +54,7 @@ def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
 
 def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     resultado = df[list(COLUMNAS_RAW)].copy().rename(
-        columns={**IDENTIFICADORES, **MEDIDAS}
+        columns={**IDENTIFICADORES, COLUMNA_PARO_TOTAL: "paro_total"}
     )
     resultado["codigo_mes"] = resultado["codigo_mes"].str.strip()
     periodo = resultado["codigo_mes"].str.extract(r"^(\d{4})(\d{2})$")
@@ -87,13 +76,11 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     ]:
         resultado[columna] = resultado[columna].str.strip()
 
-    columnas_medidas = list(MEDIDAS.values())
-    for columna in columnas_medidas:
-        texto = resultado[columna].str.strip()
-        resultado[f"{columna}_censurado"] = texto.eq("<5")
-        resultado[columna] = convertir_numero_es(
-            texto, columna, entero=True, nulos_adicionales={"<5"}
-        )
+    texto_paro = resultado["paro_total"].str.strip()
+    resultado["paro_total_censurado"] = texto_paro.eq("<5")
+    resultado["paro_total"] = convertir_numero_es(
+        texto_paro, "paro_total", entero=True, nulos_adicionales={"<5"}
+    )
 
     validar_claves(resultado, ["codigo_ine", "periodo"], nombre="paro municipal")
     if resultado["mes"].notna().any() and not resultado["mes"].dropna().between(
@@ -101,6 +88,31 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     ).all():
         raise ValueError("Hay meses fuera del intervalo 1-12")
     resultado = resultado.astype({"anio": "int16", "mes": "int8"})
+
+    datos_2025 = resultado.loc[resultado["anio"].eq(ANIO_MEDIA)]
+    if datos_2025.empty:
+        raise ValueError(f"No hay datos de paro para el año {ANIO_MEDIA}")
+
+    medias_2025 = datos_2025.groupby("codigo_ine", as_index=False).agg(
+        paro_medio_2025=("paro_total", "mean"),
+        meses_2025=("mes", "nunique"),
+    )
+    incompletos = medias_2025[medias_2025["meses_2025"].ne(MESES_ANIO)]
+    if not incompletos.empty:
+        ejemplos = ", ".join(incompletos["codigo_ine"].head(10))
+        raise ValueError(
+            f"Hay {len(incompletos)} municipios sin los {MESES_ANIO} meses "
+            f"de {ANIO_MEDIA}. Ejemplos: {ejemplos}"
+        )
+    medias_2025["paro_medio_2025"] = (
+        medias_2025["paro_medio_2025"].round(2).astype("Float64")
+    )
+    resultado = resultado.merge(
+        medias_2025[["codigo_ine", "paro_medio_2025"]],
+        on="codigo_ine",
+        how="left",
+        validate="many_to_one",
+    )
 
     columnas = [
         "codigo_ine",
@@ -113,8 +125,9 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
         "anio",
         "mes",
         "periodo_descripcion",
-        *columnas_medidas,
-        *(f"{columna}_censurado" for columna in columnas_medidas),
+        "paro_total",
+        "paro_total_censurado",
+        "paro_medio_2025",
     ]
     return resultado[columnas].sort_values(["codigo_ine", "periodo"]).reset_index(
         drop=True
@@ -133,12 +146,16 @@ def main() -> None:
     salida_s3 = subir_archivo_s3(
         RUTA_SALIDA, PROCESSED_BUCKET, S3_KEY_SALIDA
     )
-    censuradas = df_limpio.filter(like="_censurado").sum().sum()
+    censuradas = df_limpio["paro_total_censurado"].sum()
+    medias_ausentes = df_limpio.loc[
+        df_limpio["paro_medio_2025"].isna(), "codigo_ine"
+    ].nunique()
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
     print(f"Periodos: {df_limpio['periodo'].nunique():,}")
     print(f"Valores censurados (<5): {censuradas:,}")
+    print(f"Paros medios de 2025 ausentes: {medias_ausentes:,}")
     print(f"Salida: {salida_s3}")
 
 
