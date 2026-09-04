@@ -1,5 +1,5 @@
 '''
-Calcula la edad media municipal a partir de la población por edad del INE.
+Calcula la edad media municipal de 2025 y su variación desde 2021.
 
 '''
 
@@ -29,6 +29,8 @@ RUTA_SALIDA = Path("/tmp/processed/ine/edad.parquet")
 TAMANO_BLOQUE = 250_000
 NUMERO_EDADES = 101
 SEXOS = {"Hombres", "Mujeres"}
+ANIO_INICIAL_VARIACION = 2021
+ANIO_FINAL_VARIACION = 2025
 
 COLUMNAS_RAW = {
     "Municipios",
@@ -135,7 +137,34 @@ def procesar_datos(
         nombre="edad media municipal",
     )
     resultado["anio"] = resultado["anio"].astype("int16")
-    return resultado.sort_values(["codigo_ine", "anio"]).reset_index(drop=True)
+
+    edad_inicial = resultado.loc[
+        resultado["anio"].eq(ANIO_INICIAL_VARIACION),
+        ["codigo_ine", "edad_media"],
+    ].rename(columns={"edad_media": "edad_media_2021"})
+    edad_final = resultado.loc[
+        resultado["anio"].eq(ANIO_FINAL_VARIACION),
+        ["codigo_ine", "municipio", "edad_media"],
+    ].rename(columns={"edad_media": "edad_media_2025"})
+
+    resultado = edad_final.merge(
+        edad_inicial,
+        on="codigo_ine",
+        how="left",
+        validate="one_to_one",
+    )
+    resultado["variacion_edad_media_2021_2025"] = (
+        resultado["edad_media_2025"] - resultado.pop("edad_media_2021")
+    ).round(2).astype("Float64")
+
+    validar_claves(resultado, ["codigo_ine"], nombre="variación de edad media")
+    columnas = [
+        "codigo_ine",
+        "municipio",
+        "edad_media_2025",
+        "variacion_edad_media_2021_2025",
+    ]
+    return resultado[columnas].sort_values("codigo_ine").reset_index(drop=True)
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -151,8 +180,18 @@ def main() -> None:
     )
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
-    print(f"Años: {df_limpio['anio'].min()}-{df_limpio['anio'].max()}")
-    print(f"Edades medias ausentes: {df_limpio['edad_media'].isna().sum():,}")
+    print(
+        f"Periodo de variación: "
+        f"{ANIO_INICIAL_VARIACION}-{ANIO_FINAL_VARIACION}"
+    )
+    print(
+        "Edades medias de 2025 ausentes: "
+        f"{df_limpio['edad_media_2025'].isna().sum():,}"
+    )
+    print(
+        "Variaciones ausentes: "
+        f"{df_limpio['variacion_edad_media_2021_2025'].isna().sum():,}"
+    )
     print(f"Salida: {salida_s3}")
 
 
