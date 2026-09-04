@@ -1,5 +1,5 @@
 '''
-Limpia los indicadores municipales de renta del Atlas del INE.
+Procesa los tres indicadores municipales de renta seleccionados del INE.
 
 '''
 
@@ -37,11 +37,8 @@ COLUMNAS_RAW = {
 }
 METRICAS = {
     "Renta neta media por persona": "renta_neta_media_persona_eur",
-    "Renta neta media por hogar": "renta_neta_media_hogar_eur",
-    "Renta bruta media por persona": "renta_bruta_media_persona_eur",
-    "Renta bruta media por hogar": "renta_bruta_media_hogar_eur",
-    "Media de la renta por unidad de consumo": "renta_media_unidad_consumo_eur",
     "Mediana de la renta por unidad de consumo": "renta_mediana_unidad_consumo_eur",
+    "Renta neta media por hogar": "renta_neta_media_hogar_eur",
 }
 
 
@@ -52,7 +49,15 @@ def seleccionar_filas_municipales(df: pd.DataFrame) -> pd.DataFrame:
     ].str.strip().ne("")
     distrito_vacio = df["Distritos"].isna() | df["Distritos"].str.strip().eq("")
     seccion_vacia = df["Secciones"].isna() | df["Secciones"].str.strip().eq("")
-    return df.loc[municipio_informado & distrito_vacio & seccion_vacia].copy()
+    metrica_seleccionada = (
+        df["Indicadores de renta media"].str.strip().isin(METRICAS)
+    )
+    return df.loc[
+        municipio_informado
+        & distrito_vacio
+        & seccion_vacia
+        & metrica_seleccionada
+    ].copy()
 
 
 def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
@@ -87,7 +92,9 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
         resultado["Municipios"]
     )
     resultado["anio"] = pd.to_numeric(resultado["Periodo"], errors="coerce")
-    resultado["metrica"] = resultado["Indicadores de renta media"].map(METRICAS)
+    resultado["metrica"] = (
+        resultado["Indicadores de renta media"].str.strip().map(METRICAS)
+    )
     resultado["valor"] = convertir_numero_es(
         resultado["Total"],
         "Total",
