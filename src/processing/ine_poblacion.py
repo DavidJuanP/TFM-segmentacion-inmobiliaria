@@ -1,5 +1,5 @@
 '''
-Limpia el CSV de población municipal del INE y lo guarda en Parquet.
+Calcula la población de 2025 y sus variaciones municipales a 1, 3 y 5 años.
 
 '''
 
@@ -26,6 +26,12 @@ S3_KEY_SALIDA = "ine/poblacion.parquet"
 RUTA_ENTRADA = Path("/tmp/raw/ine/poblacion.csv")
 RUTA_SALIDA = Path("/tmp/processed/ine/poblacion.parquet")
 COLUMNAS_RAW = {"Municipios", "Sexo", "Periodo", "Total"}
+ANIO_REFERENCIA = 2025
+HORIZONTES = {
+    1: 2024,
+    3: 2022,
+    5: 2020,
+}
 
 
 def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
@@ -37,15 +43,20 @@ def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
 
 
 def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
-    # El fichero contiene Total, Hombres y Mujeres. Conservamos exclusivamente la población total.
+    # El fichero contiene Total, Hombres y Mujeres. Conservamos exclusivamente
+    # la población total de los años necesarios para calcular las variaciones.
     resultado = df.loc[
         df["Sexo"].str.strip().str.casefold().eq("total"),
         ["Municipios", "Periodo", "Total"],
     ].copy()
 
-    resultado["codigo_ine"], resultado["municipio"] = separar_municipio_ine(resultado["Municipios"])
+    resultado["codigo_ine"], resultado["municipio"] = separar_municipio_ine(
+        resultado["Municipios"]
+    )
     resultado["anio"] = pd.to_numeric(resultado["Periodo"], errors="coerce")
-    resultado["poblacion"] = convertir_numero_es(resultado["Total"], "Total", entero=True)
+    resultado["poblacion"] = convertir_numero_es(
+        resultado["Total"], "Total", entero=True
+    )
 
     columnas = ["codigo_ine", "municipio", "anio", "poblacion"]
     resultado = resultado[columnas]
@@ -55,7 +66,58 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
         nombre="población municipal",
     )
     resultado["anio"] = resultado["anio"].astype("int16")
-    return resultado.sort_values(["codigo_ine", "anio"]).reset_index(drop=True)
+
+    anios_necesarios = {ANIO_REFERENCIA, *HORIZONTES.values()}
+    anios_ausentes = anios_necesarios.difference(resultado["anio"].unique())
+    if anios_ausentes:
+        raise ValueError(
+            f"Faltan años necesarios para calcular las variaciones: "
+            f"{sorted(anios_ausentes)}"
+        )
+
+    poblacion_referencia = resultado.loc[
+        resultado["anio"].eq(ANIO_REFERENCIA),
+        ["codigo_ine", "municipio", "poblacion"],
+    ].rename(columns={"poblacion": "poblacion_2025"})
+    validar_claves(
+        poblacion_referencia,
+        ["codigo_ine"],
+        nombre=f"población municipal de {ANIO_REFERENCIA}",
+    )
+
+    for numero_anios, anio_anterior in HORIZONTES.items():
+        columna_anterior = f"poblacion_{anio_anterior}"
+        columna_variacion = (
+            f"variacion_poblacion_{numero_anios}_anio"
+            if numero_anios == 1
+            else f"variacion_poblacion_{numero_anios}_anios"
+        )
+        poblacion_anterior = resultado.loc[
+            resultado["anio"].eq(anio_anterior),
+            ["codigo_ine", "poblacion"],
+        ].rename(columns={"poblacion": columna_anterior})
+        poblacion_referencia = poblacion_referencia.merge(
+            poblacion_anterior,
+            on="codigo_ine",
+            how="left",
+            validate="one_to_one",
+        )
+        poblacion_referencia[columna_variacion] = (
+            poblacion_referencia["poblacion_2025"]
+            - poblacion_referencia.pop(columna_anterior)
+        ).astype("Int64")
+
+    columnas_salida = [
+        "codigo_ine",
+        "municipio",
+        "poblacion_2025",
+        "variacion_poblacion_1_anio",
+        "variacion_poblacion_3_anios",
+        "variacion_poblacion_5_anios",
+    ]
+    return poblacion_referencia[columnas_salida].sort_values(
+        "codigo_ine"
+    ).reset_index(drop=True)
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -73,8 +135,15 @@ def main() -> None:
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
-    print(f"Años: {df_limpio['anio'].min()}-{df_limpio['anio'].max()}")
-    print(f"Poblaciones ausentes: {df_limpio['poblacion'].isna().sum():,}")
+    print(f"Año de referencia: {ANIO_REFERENCIA}")
+    print(f"Poblaciones de 2025 ausentes: {df_limpio['poblacion_2025'].isna().sum():,}")
+    for numero_anios in HORIZONTES:
+        sufijo = "anio" if numero_anios == 1 else "anios"
+        columna = f"variacion_poblacion_{numero_anios}_{sufijo}"
+        print(
+            f"Variaciones a {numero_anios} año(s) ausentes: "
+            f"{df_limpio[columna].isna().sum():,}"
+        )
     print(f"Salida: {salida_s3}")
 
 
