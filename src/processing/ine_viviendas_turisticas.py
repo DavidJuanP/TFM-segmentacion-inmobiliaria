@@ -1,5 +1,5 @@
 '''
-Limpia las viviendas turísticas municipales publicadas por el INE.
+Procesa las viviendas turísticas municipales del último periodo del INE.
 
 '''
 import os
@@ -51,10 +51,24 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     resultado["metrica"] = resultado["Viviendas y plazas"].map(METRICAS)
     resultado["valor"] = convertir_numero_es(resultado["Total"], "Total")
 
-    periodo = resultado["Periodo"].str.extract(r"^(\d{4})M(\d{2})$")
+    resultado["periodo"] = resultado["Periodo"].str.strip()
+    periodo = resultado["periodo"].str.extract(r"^(\d{4})M(\d{2})$")
     resultado["anio"] = pd.to_numeric(periodo[0], errors="coerce")
     resultado["mes"] = pd.to_numeric(periodo[1], errors="coerce")
-    resultado["periodo"] = resultado["Periodo"].str.strip()
+    periodos_invalidos = resultado["periodo"].notna() & (
+        resultado["anio"].isna() | resultado["mes"].isna()
+    )
+    if periodos_invalidos.any():
+        ejemplos = resultado.loc[periodos_invalidos, "periodo"].head(5).tolist()
+        raise ValueError(
+            f"Hay {periodos_invalidos.sum()} periodos con formato inválido. "
+            f"Ejemplos: {ejemplos}"
+        )
+    if resultado["periodo"].dropna().empty:
+        raise ValueError("No hay periodos válidos en viviendas turísticas")
+
+    ultimo_periodo = resultado["periodo"].dropna().max()
+    resultado = resultado.loc[resultado["periodo"].eq(ultimo_periodo)].copy()
     validar_claves(
         resultado,
         ["codigo_ine", "periodo", "metrica"],
@@ -85,9 +99,7 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
         "mes",
         *METRICAS.values(),
     ]
-    return resultado[columnas].sort_values(
-        ["codigo_ine", "anio", "mes"]
-    ).reset_index(drop=True)
+    return resultado[columnas].sort_values("codigo_ine").reset_index(drop=True)
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -105,7 +117,7 @@ def main() -> None:
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
-    print(f"Periodos: {df_limpio['periodo'].nunique():,}")
+    print(f"Periodo conservado: {df_limpio['periodo'].iat[0]}")
     print(f"Salida: {salida_s3}")
 
 
