@@ -69,6 +69,22 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     resultado["superficie_km2"] = convertir_numero_es(
         resultado["superficie_km2"], "Superficie (km2)", decimal_coma=False
     )
+    superficies_no_positivas = resultado["superficie_km2"].notna() & resultado[
+        "superficie_km2"
+    ].le(0)
+    if superficies_no_positivas.any():
+        ejemplos = resultado.loc[
+            superficies_no_positivas,
+            ["codigo_ine", "municipio", "superficie_km2"],
+        ].head(5)
+        raise ValueError(
+            "Hay superficies menores o iguales a cero. "
+            f"Ejemplos: {ejemplos.to_dict('records')}"
+        )
+
+    resultado["densidad_poblacion_hab_km2"] = (
+        resultado["poblacion"].div(resultado["superficie_km2"]).round(2)
+    ).astype("Float64")
     coordenadas = resultado["url_mapa"].str.extract(
         r"[?&]center=(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)"
     )
@@ -87,9 +103,9 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
         "capital",
         "poblacion",
         "superficie_km2",
+        "densidad_poblacion_hab_km2",
         "longitud",
         "latitud",
-        "url_mapa",
     ]
     return resultado[columnas].sort_values("codigo_ine").reset_index(drop=True)
 
@@ -109,6 +125,10 @@ def main() -> None:
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Municipios guardados: {len(df_limpio):,}")
     print(f"Coordenadas ausentes: {df_limpio['latitud'].isna().sum():,}")
+    print(
+        "Densidades ausentes: "
+        f"{df_limpio['densidad_poblacion_hab_km2'].isna().sum():,}"
+    )
     print(f"Salida: {salida_s3}")
 
 
