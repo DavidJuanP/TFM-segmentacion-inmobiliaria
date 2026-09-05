@@ -55,6 +55,19 @@ COLUMNAS_RAW = {
 COLUMNAS_AGREGACION = ["codigo_ine", "municipio", "anio"]
 
 
+def normalizar_columnas(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.rename(columns=lambda columna: str(columna).strip(), copy=False)
+    if "Edad" not in df.columns:
+        candidatas = [
+            columna
+            for columna in df.columns
+            if columna.startswith("Edad (")
+        ]
+        if len(candidatas) == 1:
+            df = df.rename(columns={candidatas[0]: "Edad"}, copy=False)
+    return df
+
+
 def leer_datos(
     ruta: Path = RUTA_ENTRADA,
 ) -> Iterable[pd.DataFrame]:
@@ -70,6 +83,7 @@ def leer_datos(
 
 
 def agregar_bloque(df: pd.DataFrame) -> pd.DataFrame:
+    df = normalizar_columnas(df)
     validar_columnas(df, COLUMNAS_RAW)
     edad = pd.to_numeric(
         df["Edad"].str.extract(r"^(\d+)", expand=False),
