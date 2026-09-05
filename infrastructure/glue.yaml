@@ -20,10 +20,6 @@ Parameters:
     Type: String
     Description: Bucket S3 que contiene los scripts de procesamiento.
 
-  CommonPythonModules:
-    Type: String
-    Default: "pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
-
   GeoPythonModules:
     Type: String
     Default: "basemap==1.3.9,pyproj==3.6.1,shapely==2.0.7"
@@ -82,7 +78,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -103,7 +99,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -124,7 +120,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -145,7 +141,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -166,7 +162,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -187,7 +183,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -208,7 +204,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -229,7 +225,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -250,7 +246,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -271,7 +267,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -292,7 +288,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -313,7 +309,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -334,7 +330,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Sub "${CommonPythonModules},${GeoPythonModules}"
+        "--additional-python-modules": !Sub "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1,${GeoPythonModules}"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -355,7 +351,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -376,7 +372,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -397,7 +393,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -418,7 +414,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py,s3://${ScriptsBucketName}/processing/mivau_transacciones_municipales.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -439,7 +435,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py,s3://${ScriptsBucketName}/processing/mivau_transacciones_municipales.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
@@ -460,7 +456,7 @@ Resources:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": !Ref CommonPythonModules
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1

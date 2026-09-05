@@ -49,15 +49,25 @@ TAMANIOS = {
 CATEGORIA_TOTAL = "Total (tamaño del hogar)"
 
 
+def normalizar_columnas(df: pd.DataFrame) -> pd.DataFrame:
+    df = df.copy()
+    df.columns = df.columns.str.strip()
+    if "Municipio" not in df.columns and "Municipios" in df.columns:
+        df = df.rename(columns={"Municipios": "Municipio"})
+    return df
+
+
 def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
     if not ruta.is_file():
         raise FileNotFoundError(f"No existe el fichero de entrada: {ruta}")
     df = pd.read_csv(ruta, sep=";", encoding="utf-8", dtype="string")
+    df = normalizar_columnas(df)
     validar_columnas(df, COLUMNAS_RAW)
     return df
 
 
 def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
+    df = normalizar_columnas(df)
     validar_columnas(df, COLUMNAS_RAW)
     filas_municipales = df["Municipio"].str.match(r"^\d{5}\s+", na=False)
 

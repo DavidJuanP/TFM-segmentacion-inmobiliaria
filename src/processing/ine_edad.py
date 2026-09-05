@@ -3,6 +3,8 @@ Calcula la edad media municipal de 2025 y su variación desde 2021.
 
 '''
 
+from __future__ import annotations
+
 from collections.abc import Iterable
 import os
 from pathlib import Path
