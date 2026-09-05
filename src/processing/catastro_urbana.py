@@ -36,36 +36,11 @@ COLUMNAS = {
     "ULT_REVISION": "anio_ultima_revision",
     "UURBANAS": "inmuebles_urbanos",
     "V_CATASTRAL": "valor_catastral_total_eur",
-    "V_CONSTRUCCION": "valor_catastral_construccion_eur",
     "V_SUELO": "valor_catastral_suelo_eur",
     "SUPERF_URB": "superficie_urbana_m2",
     "PARCELAS_URB": "parcelas_urbanas",
-    "UU_ALMACEN": "inmuebles_almacen_estacionamiento",
-    "V_CAT_ALMACEN": "valor_catastral_almacen_estacionamiento_eur",
-    "UU_COMERCIAL": "inmuebles_comerciales",
-    "V_CAT_COMERCIAL": "valor_catastral_comercial_eur",
-    "UU_CULTURAL": "inmuebles_culturales",
-    "V_CAT_CULTURAL": "valor_catastral_cultural_eur",
-    "UU_HOSTELERIA": "inmuebles_hosteleria",
-    "V_CAT_HOSTELERIA": "valor_catastral_hosteleria_eur",
-    "UU_INDUSTRIAL": "inmuebles_industriales",
-    "V_CAT_INDUSTRIAL": "valor_catastral_industrial_eur",
-    "UU_DEPORTIVO": "inmuebles_deportivos",
-    "V_CAT_DEPORTIVO": "valor_catastral_deportivo_eur",
-    "UU_SOLAR": "solares",
-    "V_CAT_SOLAR": "valor_catastral_solares_eur",
-    "UU_OFICINAS": "inmuebles_oficinas",
-    "V_CAT_OFICINAS": "valor_catastral_oficinas_eur",
-    "UU_SINGULAR": "inmuebles_singulares",
-    "V_CAT_SINGULAR": "valor_catastral_singular_eur",
-    "UU_RELIGIOSO": "inmuebles_religiosos",
-    "V_CAT_RELIGIOSO": "valor_catastral_religioso_eur",
-    "UU_ESPECTACULOS": "inmuebles_espectaculos",
-    "V_CAT_ESPECTACULOS": "valor_catastral_espectaculos_eur",
     "UU_RES": "inmuebles_residenciales",
     "V_CAT_RES": "valor_catastral_residencial_eur",
-    "UU_SANIDAD": "inmuebles_sanitarios",
-    "V_CAT_SANIDAD": "valor_catastral_sanitario_eur",
 }
 
 COLUMNAS_ENTERAS = {
@@ -74,39 +49,19 @@ COLUMNAS_ENTERAS = {
     "UURBANAS",
     "SUPERF_URB",
     "PARCELAS_URB",
-    "UU_ALMACEN",
-    "UU_COMERCIAL",
-    "UU_CULTURAL",
-    "UU_HOSTELERIA",
-    "UU_INDUSTRIAL",
-    "UU_DEPORTIVO",
-    "UU_SOLAR",
-    "UU_OFICINAS",
-    "UU_SINGULAR",
-    "UU_RELIGIOSO",
-    "UU_ESPECTACULOS",
     "UU_RES",
-    "UU_SANIDAD",
 }
 
 COLUMNAS_VALOR = {
     "V_CATASTRAL",
-    "V_CONSTRUCCION",
     "V_SUELO",
-    "V_CAT_ALMACEN",
-    "V_CAT_COMERCIAL",
-    "V_CAT_CULTURAL",
-    "V_CAT_HOSTELERIA",
-    "V_CAT_INDUSTRIAL",
-    "V_CAT_DEPORTIVO",
-    "V_CAT_SOLAR",
-    "V_CAT_OFICINAS",
-    "V_CAT_SINGULAR",
-    "V_CAT_RELIGIOSO",
-    "V_CAT_ESPECTACULOS",
     "V_CAT_RES",
-    "V_CAT_SANIDAD",
 }
+
+COLUMNAS_CALCULADAS = [
+    "valor_catastral_suelo_eur_m2",
+    "valor_catastral_residencial_medio_eur",
+]
 
 
 def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
@@ -142,6 +97,20 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     resultado = resultado.rename(columns=COLUMNAS)
+    superficie_valida = resultado["superficie_urbana_m2"].where(
+        resultado["superficie_urbana_m2"].gt(0)
+    )
+    inmuebles_residenciales_validos = resultado[
+        "inmuebles_residenciales"
+    ].where(resultado["inmuebles_residenciales"].gt(0))
+    resultado["valor_catastral_suelo_eur_m2"] = (
+        resultado["valor_catastral_suelo_eur"] / superficie_valida
+    ).round(2)
+    resultado["valor_catastral_residencial_medio_eur"] = (
+        resultado["valor_catastral_residencial_eur"]
+        / inmuebles_residenciales_validos
+    ).round(2)
+
     validar_claves(
         resultado,
         ["codigo_ine", "anio"],
@@ -151,7 +120,7 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     resultado["anio_ultima_revision"] = resultado[
         "anio_ultima_revision"
     ].astype("int16")
-    return resultado[list(COLUMNAS.values())].sort_values(
+    return resultado[[*COLUMNAS.values(), *COLUMNAS_CALCULADAS]].sort_values(
         ["codigo_ine", "anio"]
     ).reset_index(drop=True)
 
@@ -179,6 +148,14 @@ def main() -> None:
     print(
         "Valores catastrales residenciales ausentes: "
         f"{df_limpio['valor_catastral_residencial_eur'].isna().sum():,}"
+    )
+    print(
+        "Valores catastrales de suelo por m2 ausentes: "
+        f"{df_limpio['valor_catastral_suelo_eur_m2'].isna().sum():,}"
+    )
+    print(
+        "Valores catastrales residenciales medios ausentes: "
+        f"{df_limpio['valor_catastral_residencial_medio_eur'].isna().sum():,}"
     )
     print(f"Salida: {salida_s3}")
 
