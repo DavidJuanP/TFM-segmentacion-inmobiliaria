@@ -20,6 +20,11 @@ Parameters:
     Type: String
     Description: Bucket S3 que contiene los scripts de procesamiento.
 
+  SourcePackageKey:
+    Type: String
+    Default: "dependencies/src.zip"
+    Description: Clave S3 del ZIP que contiene el paquete Python src.
+
   CommonPythonModules:
     Type: String
     Default: "pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
@@ -81,6 +86,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -101,6 +107,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -121,6 +128,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -141,6 +149,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -161,6 +170,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -181,6 +191,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -201,6 +212,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -221,6 +233,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -241,6 +254,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -261,6 +275,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -281,6 +296,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -301,6 +317,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -321,6 +338,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Sub "${CommonPythonModules},${GeoPythonModules}"
         "--library-set": analytics
       ExecutionProperty:
@@ -341,6 +359,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -361,6 +380,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -381,6 +401,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -401,6 +422,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -421,6 +443,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
@@ -441,6 +464,7 @@ Resources:
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/${SourcePackageKey}"
         "--additional-python-modules": !Ref CommonPythonModules
         "--library-set": analytics
       ExecutionProperty:
