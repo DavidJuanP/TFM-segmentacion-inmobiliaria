@@ -4,10 +4,42 @@ Funciones comunes empleadas en distintos scripts de procesamiento de datos.
 '''
 
 from collections.abc import Iterable, Sequence
+import os
 from pathlib import Path
+import sys
 
 import boto3
 import pandas as pd
+
+
+def _incorporar_argumentos_glue_al_entorno(*nombres: str) -> None:
+    """Expone como entorno los argumentos que AWS Glue pasa por ``sys.argv``."""
+    argumentos = sys.argv[1:]
+
+    for nombre in nombres:
+        if nombre in os.environ:
+            continue
+
+        opcion = f"--{nombre}"
+        valor = None
+
+        for posicion, argumento in enumerate(argumentos):
+            if argumento == opcion and posicion + 1 < len(argumentos):
+                candidato = argumentos[posicion + 1]
+                if not candidato.startswith("--"):
+                    valor = candidato
+                break
+
+            prefijo = f"{opcion}="
+            if argumento.startswith(prefijo):
+                valor = argumento[len(prefijo) :]
+                break
+
+        if valor:
+            os.environ[nombre] = valor
+
+
+_incorporar_argumentos_glue_al_entorno("RAW_BUCKET", "PROCESSED_BUCKET")
 
 
 def descargar_archivo_s3(
