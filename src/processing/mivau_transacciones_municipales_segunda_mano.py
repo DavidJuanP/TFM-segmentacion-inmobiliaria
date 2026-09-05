@@ -9,19 +9,37 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.processing.mivau_transacciones_municipales import (
-    ANIO_REFERENCIA,
-    HORIZONTES,
-    leer_alias_municipios,
-    leer_catalogo_municipios,
-    leer_datos as leer_datos_base,
-    procesar_datos as procesar_datos_base,
-)
-from src.utils.procesamiento_funciones import (
-    descargar_archivo_s3,
-    guardar_parquet,
-    subir_archivo_s3,
-)
+try:
+    from src.processing.mivau_transacciones_municipales import (
+        ANIO_REFERENCIA,
+        HORIZONTES,
+        leer_alias_municipios,
+        leer_catalogo_municipios,
+        leer_datos as leer_datos_base,
+        procesar_datos as procesar_datos_base,
+    )
+except ModuleNotFoundError:
+    from mivau_transacciones_municipales import (
+        ANIO_REFERENCIA,
+        HORIZONTES,
+        leer_alias_municipios,
+        leer_catalogo_municipios,
+        leer_datos as leer_datos_base,
+        procesar_datos as procesar_datos_base,
+    )
+
+try:
+    from src.utils.procesamiento_funciones import (
+        descargar_archivo_s3,
+        guardar_parquet,
+        subir_archivo_s3,
+    )
+except ModuleNotFoundError:
+    from procesamiento_funciones import (
+        descargar_archivo_s3,
+        guardar_parquet,
+        subir_archivo_s3,
+    )
 
 
 RAW_BUCKET = os.environ["RAW_BUCKET"]

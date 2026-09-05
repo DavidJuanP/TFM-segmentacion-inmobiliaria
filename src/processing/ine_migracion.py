@@ -7,15 +7,26 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.utils.procesamiento_funciones import (
-    convertir_numero_es,
-    descargar_archivo_s3,
-    guardar_parquet,
-    separar_municipio_ine,
-    subir_archivo_s3,
-    validar_claves,
-    validar_columnas,
-)
+try:
+    from src.utils.procesamiento_funciones import (
+        convertir_numero_es,
+        descargar_archivo_s3,
+        guardar_parquet,
+        separar_municipio_ine,
+        subir_archivo_s3,
+        validar_claves,
+        validar_columnas,
+    )
+except ModuleNotFoundError:
+    from procesamiento_funciones import (
+        convertir_numero_es,
+        descargar_archivo_s3,
+        guardar_parquet,
+        separar_municipio_ine,
+        subir_archivo_s3,
+        validar_claves,
+        validar_columnas,
+    )
 
 
 RAW_BUCKET = os.environ["RAW_BUCKET"]
