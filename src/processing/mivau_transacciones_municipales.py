@@ -1,5 +1,5 @@
 '''
-Normaliza las transacciones trimestrales de vivienda por municipio del MIVAU.
+Calcula las transacciones municipales de 2025 y sus variaciones a 1, 3 y 5 años.
 
 '''
 
@@ -41,6 +41,14 @@ PRIMERA_COLUMNA_VALORES = 3
 HOJA_CATALOGO = "IGN_INFOGEO_MUNICIPIOS"
 COLUMNAS_CATALOGO = {"Identificador", "Nombre", "Provincia"}
 COLUMNAS_ALIAS = {"COD_POSTAL", "NOMBRE_MUNICIPIO", "PROVINCIA"}
+ANIO_REFERENCIA = 2025
+ANIO_DESCARTADO = 2026
+TRIMESTRES_ANIO = 4
+HORIZONTES = {
+    1: 2024,
+    3: 2022,
+    5: 2020,
+}
 COMUNIDADES_UNIPROVINCIALES = {
     "asturias principado de": "Asturias",
     "balears illes": "Balears, Illes",
@@ -455,26 +463,104 @@ def procesar_datos(
     )
     for columna in ["municipio", "provincia", "comunidad"]:
         resultado[columna] = resultado[columna].astype("string")
-    columnas = [
+
+    # El año 2026 solo contiene datos parciales y no debe convertirse en un
+    # total anual. Un total solo es válido si sus cuatro trimestres tienen dato.
+    resultado = resultado.loc[resultado["anio"].ne(ANIO_DESCARTADO)].copy()
+    anios_necesarios = {ANIO_REFERENCIA, *HORIZONTES.values()}
+    anios_ausentes = anios_necesarios.difference(resultado["anio"].unique())
+    if anios_ausentes:
+        raise ValueError(
+            "Faltan años necesarios para calcular las variaciones de "
+            f"transacciones: {sorted(anios_ausentes)}"
+        )
+
+    identificadores = [
         "codigo_ine",
         "municipio",
         "codigo_provincia",
         "provincia",
         "comunidad",
-        "anio",
-        "trimestre",
-        "provisional",
-        "numero_transacciones",
     ]
-    resultado = resultado[columnas]
-    validar_claves(
-        resultado,
-        claves,
-        nombre="transacciones municipales",
+    totales_anuales = (
+        resultado.loc[resultado["anio"].isin(anios_necesarios)]
+        .groupby(
+            [*identificadores, "anio"],
+            as_index=False,
+            dropna=False,
+        )
+        .agg(
+            numero_transacciones=(
+                "numero_transacciones",
+                lambda valores: valores.sum(min_count=TRIMESTRES_ANIO),
+            ),
+            trimestres=("trimestre", "nunique"),
+        )
     )
-    return resultado.sort_values(
-        ["codigo_ine", "anio", "trimestre"]
-    ).reset_index(drop=True)
+    periodos_incompletos = totales_anuales["trimestres"].ne(TRIMESTRES_ANIO)
+    if periodos_incompletos.any():
+        ejemplos = totales_anuales.loc[
+            periodos_incompletos, ["codigo_ine", "anio", "trimestres"]
+        ].head(10).to_dict("records")
+        raise ValueError(
+            "Hay municipios sin los cuatro trimestres necesarios para "
+            f"calcular el total anual. Ejemplos: {ejemplos}"
+        )
+    totales_anuales = totales_anuales.drop(columns="trimestres")
+    validar_claves(
+        totales_anuales,
+        ["codigo_ine", "anio"],
+        nombre="transacciones municipales anuales",
+    )
+
+    transacciones_referencia = totales_anuales.loc[
+        totales_anuales["anio"].eq(ANIO_REFERENCIA),
+        [*identificadores, "numero_transacciones"],
+    ].rename(columns={"numero_transacciones": "transacciones_2025"})
+    validar_claves(
+        transacciones_referencia,
+        ["codigo_ine"],
+        nombre=f"transacciones municipales de {ANIO_REFERENCIA}",
+    )
+
+    for numero_anios, anio_anterior in HORIZONTES.items():
+        columna_anterior = f"transacciones_{anio_anterior}"
+        columna_variacion = (
+            f"variacion_transacciones_{numero_anios}_anio"
+            if numero_anios == 1
+            else f"variacion_transacciones_{numero_anios}_anios"
+        )
+        transacciones_anteriores = totales_anuales.loc[
+            totales_anuales["anio"].eq(anio_anterior),
+            ["codigo_ine", "numero_transacciones"],
+        ].rename(columns={"numero_transacciones": columna_anterior})
+        transacciones_referencia = transacciones_referencia.merge(
+            transacciones_anteriores,
+            on="codigo_ine",
+            how="left",
+            validate="one_to_one",
+        )
+        transacciones_referencia[columna_variacion] = (
+            transacciones_referencia["transacciones_2025"]
+            - transacciones_referencia.pop(columna_anterior)
+        ).astype("Int64")
+
+    columnas = [
+        *identificadores,
+        "transacciones_2025",
+        "variacion_transacciones_1_anio",
+        "variacion_transacciones_3_anios",
+        "variacion_transacciones_5_anios",
+    ]
+    transacciones_referencia = transacciones_referencia[columnas]
+    validar_claves(
+        transacciones_referencia,
+        ["codigo_ine"],
+        nombre="variaciones de transacciones municipales",
+    )
+    return transacciones_referencia.sort_values("codigo_ine").reset_index(
+        drop=True
+    )
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -496,11 +582,18 @@ def main() -> None:
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
-    print(f"Años: {df_limpio['anio'].min()}-{df_limpio['anio'].max()}")
+    print(f"Año de referencia: {ANIO_REFERENCIA}")
     print(
-        "Transacciones ausentes: "
-        f"{df_limpio['numero_transacciones'].isna().sum():,}"
+        "Transacciones de 2025 ausentes: "
+        f"{df_limpio['transacciones_2025'].isna().sum():,}"
     )
+    for numero_anios in HORIZONTES:
+        sufijo = "anio" if numero_anios == 1 else "anios"
+        columna = f"variacion_transacciones_{numero_anios}_{sufijo}"
+        print(
+            f"Variaciones a {numero_anios} año(s) ausentes: "
+            f"{df_limpio[columna].isna().sum():,}"
+        )
     print(f"Salida: {salida_s3}")
 
 

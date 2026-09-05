@@ -100,12 +100,26 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
             f"Ejemplos: {ejemplos}"
         )
 
+    viviendas_totales_validas = resultado["viviendas_totales"].where(
+        resultado["viviendas_totales"].gt(0)
+    )
+    resultado["porcentaje_viviendas_vacias"] = (
+        resultado["viviendas_vacias"] / viviendas_totales_validas * 100
+    ).round(2)
+    resultado["porcentaje_viviendas_uso_esporadico"] = (
+        resultado["viviendas_uso_esporadico"]
+        / viviendas_totales_validas
+        * 100
+    ).round(2)
+
     columnas = [
         "codigo_ine",
         "municipio",
         "viviendas_totales",
         "viviendas_vacias",
         "viviendas_uso_esporadico",
+        "porcentaje_viviendas_vacias",
+        "porcentaje_viviendas_uso_esporadico",
     ]
     resultado = resultado[columnas]
     validar_claves(resultado, ["codigo_ine"], nombre="viviendas municipales")
@@ -137,6 +151,14 @@ def main() -> None:
     print(
         "Totales de viviendas de uso esporádico ausentes: "
         f"{df_limpio['viviendas_uso_esporadico'].isna().sum():,}"
+    )
+    print(
+        "Porcentajes de viviendas vacías ausentes: "
+        f"{df_limpio['porcentaje_viviendas_vacias'].isna().sum():,}"
+    )
+    print(
+        "Porcentajes de viviendas de uso esporádico ausentes: "
+        f"{df_limpio['porcentaje_viviendas_uso_esporadico'].isna().sum():,}"
     )
     print(f"Salida: {salida_s3}")
 
