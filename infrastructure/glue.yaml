@@ -449,6 +449,41 @@ Resources:
       MaxRetries: 0
       Timeout: 120
 
+
+  TfmGlueWorkflow:
+  Type: AWS::Glue::Workflow
+  Properties:
+    Name: tfm-processing-workflow
+
+  StartProcessingTrigger:
+    Type: AWS::Glue::Trigger
+    Properties:
+      Name: tfm-start-processing
+      Type: ON_DEMAND
+      WorkflowName: !Ref TfmGlueWorkflow
+      Actions:
+        - JobName: !Ref CatastroUrbanaJob
+        - JobName: !Ref CatastroUrbana2021Job
+        - JobName: !Ref IgnMunicipiosJob
+        - JobName: !Ref IneEdadJob
+        - JobName: !Ref IneMigracionJob
+        - JobName: !Ref InePoblacionJob
+        - JobName: !Ref IneRentaJob
+        - JobName: !Ref IneTamanioHogarJob
+        - JobName: !Ref IneViviendasJob
+        - JobName: !Ref IneViviendasTuristicasJob
+        - JobName: !Ref MirCriminalidadJob
+        - JobName: !Ref MirOkupacionJob
+        - JobName: !Ref MitDistanciaCostaJob
+        - JobName: !Ref MivauAlquilerJob
+        - JobName: !Ref MivauTransaccionesJob
+        - JobName: !Ref MivauTransaccionesMunicipalesJob
+        - JobName: !Ref MivauTransaccionesMunicipalesNuevaJob
+        - JobName: !Ref MivauTransaccionesMunicipalesSegundaManoJob
+        - JobName: !Ref SepeParoJob
+      StartOnCreation: false
+
+
 Outputs:
   GlueProcessingRoleArn:
     Description: ARN del rol utilizado por los jobs Glue.
