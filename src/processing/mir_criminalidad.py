@@ -1,5 +1,5 @@
 '''
-Extrae el total anual de infracciones penales por municipio del MIR.
+Extrae el total de infracciones penales de 2025 por municipio del MIR.
 
 '''
 
@@ -27,6 +27,7 @@ RUTA_ENTRADA = Path("/tmp/raw/mir/criminalidad.csv")
 RUTA_SALIDA = Path("/tmp/processed/mir/criminalidad.parquet")
 COLUMNAS_RAW = {"Geografía", "Tipología penal", "Periodos:", "Total"}
 TIPOLOGIA_TOTAL = "III. TOTAL INFRACCIONES PENALES"
+ANIO_REFERENCIA = 2025
 
 
 def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
@@ -45,9 +46,13 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     mascara = (
         df["Geografía"].str.match(r"^\d{5}\s+", na=False)
         & df["Tipología penal"].str.strip().eq(TIPOLOGIA_TOTAL)
-        & periodo.notna()
+        & periodo.eq(str(ANIO_REFERENCIA))
     )
     resultado = df.loc[mascara, ["Geografía", "Total"]].copy()
+    if resultado.empty:
+        raise ValueError(
+            f"No hay datos municipales de criminalidad para {ANIO_REFERENCIA}"
+        )
     resultado["codigo_ine"], resultado["municipio"] = separar_municipio_ine(
         resultado["Geografía"]
     )
@@ -61,11 +66,11 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     ]
     validar_claves(
         resultado,
-        ["codigo_ine", "anio"],
-        nombre="total municipal de infracciones penales",
+        ["codigo_ine"],
+        nombre=f"total municipal de infracciones penales de {ANIO_REFERENCIA}",
     )
     resultado["anio"] = resultado["anio"].astype("int16")
-    return resultado.sort_values(["codigo_ine", "anio"]).reset_index(drop=True)
+    return resultado.sort_values("codigo_ine").reset_index(drop=True)
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -83,7 +88,7 @@ def main() -> None:
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
-    print(f"Años: {df_limpio['anio'].min()}-{df_limpio['anio'].max()}")
+    print(f"Año de referencia: {ANIO_REFERENCIA}")
     print(
         "Totales ausentes: "
         f"{df_limpio['total_infracciones'].isna().sum():,}"

@@ -25,5 +25,7 @@ phases:
       - python -m src.processing.mivau_alquiler
       - python -m src.processing.mivau_transacciones
       - python -m src.processing.mivau_transacciones_municipales
+      - python -m src.processing.mivau_transacciones_municipales_nueva
+      - python -m src.processing.mivau_transacciones_municipales_segunda_mano
       - python -m src.processing.sepe_paro
       - echo "Procesamiento de datos finalizado"

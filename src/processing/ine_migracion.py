@@ -1,5 +1,5 @@
 '''
-Limpia los saldos migratorios municipales del INE.
+Extrae los saldos migratorios municipales de 2024 del INE.
 '''
 
 import os
@@ -25,6 +25,7 @@ S3_KEY_SALIDA = "ine/migracion.parquet"
 RUTA_ENTRADA = Path("/tmp/raw/ine/migracion.csv")
 RUTA_SALIDA = Path("/tmp/processed/ine/migracion.parquet")
 COLUMNAS_RAW = {"Municipios", "Sexo", "Tipo de saldo", "Periodo", "Total"}
+ANIO_REFERENCIA = 2024
 TIPOS_SALDO = {
     "Saldo total": "saldo_total",
     "Saldo interior": "saldo_interior",
@@ -41,8 +42,11 @@ def leer_datos(ruta: Path = RUTA_ENTRADA) -> pd.DataFrame:
 
 
 def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
-    mascara = df["Municipios"].notna() & df["Sexo"].str.strip().str.casefold().eq(
-        "ambos sexos"
+    periodo = pd.to_numeric(df["Periodo"], errors="coerce")
+    mascara = (
+        df["Municipios"].notna()
+        & df["Sexo"].str.strip().str.casefold().eq("ambos sexos")
+        & periodo.eq(ANIO_REFERENCIA)
     )
     resultado = df.loc[
         mascara, ["Municipios", "Tipo de saldo", "Periodo", "Total"]
@@ -50,7 +54,10 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     resultado["codigo_ine"], resultado["municipio"] = separar_municipio_ine(
         resultado["Municipios"]
     )
-    resultado["anio"] = pd.to_numeric(resultado["Periodo"], errors="coerce")
+    if resultado.empty:
+        raise ValueError(f"No hay datos de migración para {ANIO_REFERENCIA}")
+
+    resultado["anio"] = periodo.loc[mascara]
     resultado["tipo_saldo"] = resultado["Tipo de saldo"].map(TIPOS_SALDO)
     resultado["saldo"] = convertir_numero_es(resultado["Total"], "Total", entero=True)
     validar_claves(
@@ -70,11 +77,14 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
             resultado[columna] = pd.NA
         resultado[columna] = resultado[columna].astype("Int64")
     resultado["anio"] = resultado["anio"].astype("int16")
+    validar_claves(
+        resultado,
+        ["codigo_ine"],
+        nombre=f"saldos migratorios municipales de {ANIO_REFERENCIA}",
+    )
 
     columnas = ["codigo_ine", "municipio", "anio", *TIPOS_SALDO.values()]
-    return resultado[columnas].sort_values(["codigo_ine", "anio"]).reset_index(
-        drop=True
-    )
+    return resultado[columnas].sort_values("codigo_ine").reset_index(drop=True)
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -92,7 +102,7 @@ def main() -> None:
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
-    print(f"Años: {df_limpio['anio'].min()}-{df_limpio['anio'].max()}")
+    print(f"Año de referencia: {ANIO_REFERENCIA}")
     print(f"Salida: {salida_s3}")
 
 

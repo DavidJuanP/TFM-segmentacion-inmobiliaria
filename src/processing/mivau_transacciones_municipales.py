@@ -7,6 +7,7 @@ import os
 import re
 import unicodedata
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 
@@ -193,7 +194,19 @@ def extraer_periodos(df: pd.DataFrame) -> pd.DataFrame:
     return periodos
 
 
-def extraer_municipios(df: pd.DataFrame) -> pd.DataFrame:
+def extraer_municipios(
+    df: pd.DataFrame,
+    catalogo_municipios: Optional[pd.DataFrame] = None,
+) -> pd.DataFrame:
+    provincias_catalogo = set()
+    if catalogo_municipios is not None:
+        validar_columnas(catalogo_municipios, COLUMNAS_CATALOGO)
+        provincias_catalogo = set(
+            catalogo_municipios["Provincia"]
+            .dropna()
+            .map(lambda valor: normalizar_texto(valor, ordenar=True))
+        )
+
     filas = []
     comunidad = None
     provincia = None
@@ -205,17 +218,44 @@ def extraer_municipios(df: pd.DataFrame) -> pd.DataFrame:
         if pd.isna(valor):
             continue
         territorio = str(valor).strip()
+        territorio_normalizado = normalizar_texto(territorio)
+        es_ciudad_autonoma = territorio_normalizado in {"ceuta", "melilla"}
+
+        # En los ficheros de vivienda nueva y de segunda mano algunos
+        # agregados provinciales y autonómicos tienen cifras. No deben
+        # confundirse con municipios: las comunidades aparecen en mayúsculas
+        # y las provincias se identifican mediante el catálogo del IGN.
+        if territorio == territorio.upper() and not es_ciudad_autonoma:
+            comunidad = territorio
+            provincia = COMUNIDADES_UNIPROVINCIALES.get(
+                territorio_normalizado
+            )
+            continue
+        clave_territorio = normalizar_texto(territorio, ordenar=True)
+        clave_provincia_actual = (
+            normalizar_texto(provincia, ordenar=True)
+            if provincia is not None
+            else None
+        )
+        if (
+            not es_ciudad_autonoma
+            and clave_territorio in provincias_catalogo
+            and clave_territorio != clave_provincia_actual
+        ):
+            provincia = territorio
+            continue
+
         if not es_municipio:
             if territorio == territorio.upper():
                 comunidad = territorio
                 provincia = COMUNIDADES_UNIPROVINCIALES.get(
-                    normalizar_texto(territorio)
+                    territorio_normalizado
                 )
             else:
                 provincia = territorio
             continue
 
-        if normalizar_texto(territorio) in {"ceuta", "melilla"}:
+        if es_ciudad_autonoma:
             comunidad = territorio
             provincia = territorio
         if comunidad is None or provincia is None:
@@ -390,7 +430,9 @@ def procesar_datos(
 
     periodos = extraer_periodos(df)
     municipios = asignar_codigos_ine(
-        extraer_municipios(df), catalogo_municipios, alias_municipios
+        extraer_municipios(df, catalogo_municipios),
+        catalogo_municipios,
+        alias_municipios,
     )
     columnas_valores = periodos["columna_origen"].tolist()
     valores = df.loc[municipios["fila_origen"], columnas_valores].copy()

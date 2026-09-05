@@ -89,6 +89,26 @@ Resources:
       MaxRetries: 0
       Timeout: 120
 
+  CatastroUrbana2021Job:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-catastro-urbana-2021"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/catastro_urbana_2021.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
   IgnMunicipiosJob:
     Type: AWS::Glue::Job
     Properties:
@@ -358,6 +378,46 @@ Resources:
         Name: pythonshell
         PythonVersion: "3.9"
         ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mivau_transacciones_municipales.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MivauTransaccionesMunicipalesNuevaJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mivau-transacciones-municipales-nueva"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mivau_transacciones_municipales_nueva.py"
+      DefaultArguments:
+        "--RAW_BUCKET": !Ref RawDataBucketName
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--additional-python-modules": !Ref CommonPythonModules
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  MivauTransaccionesMunicipalesSegundaManoJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-mivau-transacciones-municipales-segunda-mano"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mivau_transacciones_municipales_segunda_mano.py"
       DefaultArguments:
         "--RAW_BUCKET": !Ref RawDataBucketName
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName

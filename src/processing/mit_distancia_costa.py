@@ -144,9 +144,6 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     columnas = [
         "codigo_ine",
         "municipio",
-        "provincia",
-        "latitud",
-        "longitud",
         "distancia_costa_km",
     ]
     return resultado[columnas].sort_values("codigo_ine").reset_index(drop=True)
@@ -166,10 +163,6 @@ def main() -> None:
     )
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Municipios guardados: {len(df_limpio):,}")
-    print(
-        "Coordenadas ausentes: "
-        f"{df_limpio[['latitud', 'longitud']].isna().any(axis=1).sum():,}"
-    )
     print(
         "Distancias ausentes: "
         f"{df_limpio['distancia_costa_km'].isna().sum():,}"
