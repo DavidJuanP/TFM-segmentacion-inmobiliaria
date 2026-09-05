@@ -451,9 +451,9 @@ Resources:
 
 
   TfmGlueWorkflow:
-  Type: AWS::Glue::Workflow
-  Properties:
-    Name: tfm-processing-workflow
+    Type: AWS::Glue::Workflow
+    Properties:
+      Name: tfm-processing-workflow
 
   StartProcessingTrigger:
     Type: AWS::Glue::Trigger
