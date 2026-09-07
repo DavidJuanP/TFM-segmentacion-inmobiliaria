@@ -149,7 +149,7 @@ Resources:
     UpdateReplacePolicy: Retain
 
     Properties:
-      BucketName: !Sub "s3-tfm-scripts-${AWS::AccountId}-${AWS::Region}"
+      BucketName: !Sub "s3-tfm-athena-results-${AWS::AccountId}-${AWS::Region}"
 
       VersioningConfiguration:
         Status: Enabled
