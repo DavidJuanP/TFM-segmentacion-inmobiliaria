@@ -20,7 +20,7 @@ SELECT
     COUNT(*) AS repeticiones
 FROM sepe
 GROUP BY codigo_ine, municipio
-HAVING COUNT(*) > 12
+HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
 
 -- Principales estadísticos

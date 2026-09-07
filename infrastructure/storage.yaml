@@ -142,6 +142,51 @@ Resources:
               Bool:
                 aws:SecureTransport: false
 
+  # AthenaResultsBucket: Bucket de S3 para almacenar resultados de consultas de Athena
+  AthenaResultsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+
+    Properties:
+      BucketName: !Sub "s3-tfm-scripts-${AWS::AccountId}-${AWS::Region}"
+
+      VersioningConfiguration:
+        Status: Enabled
+
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        IgnorePublicAcls: true
+        BlockPublicPolicy: true
+        RestrictPublicBuckets: true
+
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+
+  ScriptsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref AthenaResultsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt AthenaResultsBucket.Arn
+              - !Sub "${AthenaResultsBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
 Outputs:
 
   RawDataBucketName:
@@ -159,7 +204,6 @@ Outputs:
   RawDataUri:
     Description: URI del bucket de datos raw.
     Value: !Sub "s3://${RawDataBucket}/"
-
 
   ProcessedDataBucketName:
     Description: Nombre del bucket dedicado a datos procesados.
@@ -192,3 +236,19 @@ Outputs:
   ScriptsUri:
     Description: URI del bucket de scripts.
     Value: !Sub "s3://${ScriptsBucket}/"
+
+  AthenaResultsBucketName:
+    Description: Nombre del bucket dedicado a resultados de Athena.
+    Value: !Ref AthenaResultsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-AthenaResultsBucketName"
+
+  AthenaResultsBucketArn:
+    Description: ARN del bucket dedicado a resultados de Athena.
+    Value: !GetAtt AthenaResultsBucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-AthenaResultsBucketArn"
+
+  AthenaResultsUri:
+    Description: URI del bucket de resultados de Athena.
+    Value: !Sub "s3://${AthenaResultsBucket}/"
