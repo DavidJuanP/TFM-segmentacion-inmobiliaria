@@ -1,4 +1,4 @@
-'''Procesa el paro total mensual municipal del SEPE.
+'''Calcula el paro medio municipal de 2025 a partir de los datos del SEPE.
 
 '''
 
@@ -117,31 +117,39 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
     medias_2025["paro_medio_2025"] = (
         medias_2025["paro_medio_2025"].round(2).astype("Float64")
     )
-    resultado = resultado.merge(
-        medias_2025[["codigo_ine", "paro_medio_2025"]],
-        on="codigo_ine",
-        how="left",
-        validate="many_to_one",
-    )
-
-    columnas = [
+    columnas_identificadoras = [
         "codigo_ine",
         "municipio",
         "codigo_provincia",
         "provincia",
         "codigo_comunidad",
         "comunidad",
-        "periodo",
         "anio",
-        "mes",
-        "periodo_descripcion",
-        "paro_total",
-        "paro_total_censurado",
+    ]
+    identificadores = datos_2025[columnas_identificadoras].drop_duplicates()
+    validar_claves(
+        identificadores,
+        ["codigo_ine"],
+        nombre="identificadores municipales del paro",
+    )
+    resultado = identificadores.merge(
+        medias_2025[["codigo_ine", "paro_medio_2025"]],
+        on="codigo_ine",
+        how="left",
+        validate="one_to_one",
+    )
+
+    columnas = [
+        *columnas_identificadoras,
         "paro_medio_2025",
     ]
-    return resultado[columnas].sort_values(["codigo_ine", "periodo"]).reset_index(
-        drop=True
+    resultado = resultado[columnas]
+    validar_claves(
+        resultado,
+        ["codigo_ine"],
+        nombre="paro medio municipal de 2025",
     )
+    return resultado.sort_values("codigo_ine").reset_index(drop=True)
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -156,15 +164,11 @@ def main() -> None:
     salida_s3 = subir_archivo_s3(
         RUTA_SALIDA, PROCESSED_BUCKET, S3_KEY_SALIDA
     )
-    censuradas = df_limpio["paro_total_censurado"].sum()
-    medias_ausentes = df_limpio.loc[
-        df_limpio["paro_medio_2025"].isna(), "codigo_ine"
-    ].nunique()
+    medias_ausentes = df_limpio["paro_medio_2025"].isna().sum()
     print(f"Filas leídas: {len(df_raw):,}")
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
-    print(f"Periodos: {df_limpio['periodo'].nunique():,}")
-    print(f"Valores censurados (<5): {censuradas:,}")
+    print(f"Año: {ANIO_MEDIA}")
     print(f"Paros medios de 2025 ausentes: {medias_ausentes:,}")
     print(f"Salida: {salida_s3}")
 
