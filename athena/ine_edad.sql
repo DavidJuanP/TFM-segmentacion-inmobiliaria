@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE edad;
+DESCRIBE edad_parquet;
 
 -- Muestra del dataset
-SELECT * FROM edad LIMIT 10;
+SELECT * FROM edad_parquet LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM edad;
+FROM edad_parquet;
 
 -- Municipios duplicados
 SELECT codigo_ine, municipio, COUNT(*) AS repeticiones
-FROM edad
+FROM edad_parquet
 GROUP BY codigo_ine, municipio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -26,10 +26,10 @@ SELECT
     MIN(variacion_edad_media_5_anios) AS variacion_minima,
     MAX(variacion_edad_media_5_anios) AS variacion_maxima,
     AVG(variacion_edad_media_5_anios) AS variacion_media
-FROM edad;
+FROM edad_parquet;
 
 -- Edades fuera del rango posible
 SELECT *
-FROM edad
+FROM edad_parquet
 WHERE edad_media_2022 NOT BETWEEN 0 AND 100
    OR ABS(variacion_edad_media_5_anios) > 100;

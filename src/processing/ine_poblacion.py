@@ -33,7 +33,7 @@ except ModuleNotFoundError:
 RAW_BUCKET = os.environ["RAW_BUCKET"]
 PROCESSED_BUCKET = os.environ["PROCESSED_BUCKET"]
 S3_KEY_ENTRADA = "ine/poblacion.csv"
-S3_KEY_SALIDA = "ine/poblacion.parquet"
+S3_KEY_SALIDA = "ine_poblacion/poblacion.parquet"
 RUTA_ENTRADA = Path("/tmp/raw/ine/poblacion.csv")
 RUTA_SALIDA = Path("/tmp/processed/ine/poblacion.parquet")
 COLUMNAS_RAW = {"Municipios", "Sexo", "Periodo", "Total"}

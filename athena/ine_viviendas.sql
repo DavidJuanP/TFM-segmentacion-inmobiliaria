@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE viviendas;
+DESCRIBE viviendas_parquet;
 
 -- Muestra del dataset
-SELECT * FROM viviendas LIMIT 10;
+SELECT * FROM viviendas_parquet LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM viviendas;
+FROM viviendas_parquet;
 
 -- Municipios duplicados
 SELECT codigo_ine, municipio, COUNT(*) AS repeticiones
-FROM viviendas
+FROM viviendas_parquet
 GROUP BY codigo_ine, municipio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -25,11 +25,11 @@ SELECT
     AVG(viviendas_uso_esporadico) AS viviendas_esporadicas_medias,
     AVG(porcentaje_viviendas_vacias) AS porcentaje_vacias_medio,
     AVG(porcentaje_viviendas_uso_esporadico) AS porcentaje_esporadicas_medio
-FROM viviendas;
+FROM viviendas_parquet;
 
 -- Valores negativos, porcentajes inválidos o partes mayores que el total
 SELECT *
-FROM viviendas
+FROM viviendas_parquet
 WHERE viviendas_totales < 0
    OR viviendas_vacias < 0
    OR viviendas_uso_esporadico < 0
