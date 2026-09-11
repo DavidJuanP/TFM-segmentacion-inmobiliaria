@@ -40,7 +40,7 @@ ARCHIVOS_ENTRADA = {
     "municipios": "ign/municipios.parquet",
     "catastro": "catastro/urbana.parquet",
     "catastro_2021": "catastro/urbana_2021.parquet",
-    "edad": "ine/edad.parquet",
+    "edad": "ine_edad/edad.parquet",
     "migracion": "ine/migracion.parquet",
     "poblacion": "ine/poblacion.parquet",
     "renta": "ine/renta.parquet",

@@ -17,19 +17,23 @@ ORDER BY repeticiones DESC;
 
 -- Principales estadísticos
 SELECT
-    MIN(edad_media_2022) AS minimo,
-    MAX(edad_media_2022) AS maximo,
-    MAX(edad_media_2022) - MIN(edad_media_2022) AS rango,
-    STDDEV(edad_media_2022) AS desviacion_estandar,
-    AVG(edad_media_2022) AS media,
-    approx_percentile(edad_media_2022, 0.5) AS mediana,
-    MIN(variacion_edad_media_5_anios) AS variacion_minima,
-    MAX(variacion_edad_media_5_anios) AS variacion_maxima,
-    AVG(variacion_edad_media_5_anios) AS variacion_media
+    MIN(edad_media_2025) AS minimo,
+    MAX(edad_media_2025) AS maximo,
+    MAX(edad_media_2025) - MIN(edad_media_2025) AS rango,
+    STDDEV(edad_media_2025) AS desviacion_estandar,
+    AVG(edad_media_2025) AS media,
+    approx_percentile(edad_media_2025, 0.5) AS mediana,
+    MIN(variacion_edad_media_1_anio) AS variacion_1_anio_minima,
+    MAX(variacion_edad_media_1_anio) AS variacion_1_anio_maxima,
+    AVG(variacion_edad_media_1_anio) AS variacion_1_anio_media,
+    MIN(variacion_edad_media_3_anios) AS variacion_3_anios_minima,
+    MAX(variacion_edad_media_3_anios) AS variacion_3_anios_maxima,
+    AVG(variacion_edad_media_3_anios) AS variacion_3_anios_media
 FROM ine_edad;
 
 -- Edades fuera del rango posible
 SELECT *
 FROM ine_edad
-WHERE edad_media_2022 NOT BETWEEN 0 AND 100
-   OR ABS(variacion_edad_media_5_anios) > 100;
+WHERE edad_media_2025 NOT BETWEEN 0 AND 100
+   OR ABS(variacion_edad_media_1_anio) > 100
+   OR ABS(variacion_edad_media_3_anios) > 100;

@@ -1,5 +1,5 @@
 '''
-Calcula la edad media municipal de 2022 y su variación a cinco años.
+Calcula la edad media municipal de 2025 y sus variaciones a uno y tres años.
 
 '''
 
@@ -42,8 +42,11 @@ RUTA_SALIDA = Path("/tmp/processed/ine/edad.parquet")
 TAMANO_BLOQUE = 250_000
 NUMERO_EDADES = 101
 SEXOS = {"Hombres", "Mujeres"}
-ANIO_INICIAL_VARIACION = 2017
-ANIO_FINAL_VARIACION = 2022
+ANIO_REFERENCIA = 2025
+HORIZONTES = {
+    1: 2024,
+    3: 2022,
+}
 
 COLUMNAS_RAW = {
     "Municipios",
@@ -168,33 +171,60 @@ def procesar_datos(
     )
     resultado["anio"] = resultado["anio"].astype("int16")
 
-    edad_inicial = resultado.loc[
-        resultado["anio"].eq(ANIO_INICIAL_VARIACION),
-        ["codigo_ine", "edad_media"],
-    ].rename(columns={"edad_media": "edad_media_2017"})
-    edad_final = resultado.loc[
-        resultado["anio"].eq(ANIO_FINAL_VARIACION),
+    anios_necesarios = {ANIO_REFERENCIA, *HORIZONTES.values()}
+    anios_ausentes = anios_necesarios.difference(resultado["anio"].unique())
+    if anios_ausentes:
+        raise ValueError(
+            "Faltan años necesarios para calcular las variaciones de edad: "
+            f"{sorted(anios_ausentes)}"
+        )
+
+    edad_referencia = resultado.loc[
+        resultado["anio"].eq(ANIO_REFERENCIA),
         ["codigo_ine", "municipio", "edad_media"],
-    ].rename(columns={"edad_media": "edad_media_2022"})
-
-    resultado = edad_final.merge(
-        edad_inicial,
-        on="codigo_ine",
-        how="left",
-        validate="one_to_one",
+    ].rename(columns={"edad_media": "edad_media_2025"})
+    validar_claves(
+        edad_referencia,
+        ["codigo_ine"],
+        nombre=f"edad media municipal de {ANIO_REFERENCIA}",
     )
-    resultado["variacion_edad_media_5_anios"] = (
-        resultado["edad_media_2022"] - resultado.pop("edad_media_2017")
-    ).round(2).astype("Float64")
 
-    validar_claves(resultado, ["codigo_ine"], nombre="variación de edad media")
+    for numero_anios, anio_anterior in HORIZONTES.items():
+        columna_anterior = f"edad_media_{anio_anterior}"
+        sufijo = "anio" if numero_anios == 1 else "anios"
+        columna_variacion = (
+            f"variacion_edad_media_{numero_anios}_{sufijo}"
+        )
+        edad_anterior = resultado.loc[
+            resultado["anio"].eq(anio_anterior),
+            ["codigo_ine", "edad_media"],
+        ].rename(columns={"edad_media": columna_anterior})
+        edad_referencia = edad_referencia.merge(
+            edad_anterior,
+            on="codigo_ine",
+            how="left",
+            validate="one_to_one",
+        )
+        edad_referencia[columna_variacion] = (
+            edad_referencia["edad_media_2025"]
+            - edad_referencia.pop(columna_anterior)
+        ).round(2).astype("Float64")
+
+    validar_claves(
+        edad_referencia,
+        ["codigo_ine"],
+        nombre="variaciones de edad media",
+    )
     columnas = [
         "codigo_ine",
         "municipio",
-        "edad_media_2022",
-        "variacion_edad_media_5_anios",
+        "edad_media_2025",
+        "variacion_edad_media_1_anio",
+        "variacion_edad_media_3_anios",
     ]
-    return resultado[columnas].sort_values("codigo_ine").reset_index(drop=True)
+    return edad_referencia[columnas].sort_values(
+        "codigo_ine"
+    ).reset_index(drop=True)
 
 
 def guardar_datos(df: pd.DataFrame, ruta: Path = RUTA_SALIDA) -> None:
@@ -210,18 +240,18 @@ def main() -> None:
     )
     print(f"Filas guardadas: {len(df_limpio):,}")
     print(f"Municipios: {df_limpio['codigo_ine'].nunique():,}")
+    print(f"Año de referencia: {ANIO_REFERENCIA}")
     print(
-        f"Periodo de variación: "
-        f"{ANIO_INICIAL_VARIACION}-{ANIO_FINAL_VARIACION}"
+        "Edades medias de 2025 ausentes: "
+        f"{df_limpio['edad_media_2025'].isna().sum():,}"
     )
-    print(
-        "Edades medias de 2022 ausentes: "
-        f"{df_limpio['edad_media_2022'].isna().sum():,}"
-    )
-    print(
-        "Variaciones ausentes: "
-        f"{df_limpio['variacion_edad_media_5_anios'].isna().sum():,}"
-    )
+    for numero_anios in HORIZONTES:
+        sufijo = "anio" if numero_anios == 1 else "anios"
+        columna = f"variacion_edad_media_{numero_anios}_{sufijo}"
+        print(
+            f"Variaciones a {numero_anios} año(s) ausentes: "
+            f"{df_limpio[columna].isna().sum():,}"
+        )
     print(f"Salida: {salida_s3}")
 
 
