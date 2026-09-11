@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE distancia_costa;
+DESCRIBE mit;
 
 -- Muestra del dataset
-SELECT * FROM distancia_costa LIMIT 10;
+SELECT * FROM mit LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM distancia_costa;
+FROM mit;
 
 -- Municipios duplicados
 SELECT codigo_ine, municipio, COUNT(*) AS repeticiones
-FROM distancia_costa
+FROM mit
 GROUP BY codigo_ine, municipio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -23,9 +23,9 @@ SELECT
     STDDEV(distancia_costa_km) AS desviacion_estandar,
     AVG(distancia_costa_km) AS media,
     approx_percentile(distancia_costa_km, 0.5) AS mediana
-FROM distancia_costa;
+FROM mit;
 
 -- Distancias negativas (imposibles)
 SELECT *
-FROM distancia_costa
+FROM mit
 WHERE distancia_costa_km < 0;

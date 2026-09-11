@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE poblacion;
+DESCRIBE ine_poblacion;
 
 -- Muestra del dataset
-SELECT * FROM poblacion LIMIT 10;
+SELECT * FROM ine_poblacion LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM poblacion;
+FROM ine_poblacion;
 
 -- Municipios duplicados
 SELECT codigo_ine, municipio, COUNT(*) AS repeticiones
-FROM poblacion
+FROM ine_poblacion
 GROUP BY codigo_ine, municipio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -25,9 +25,9 @@ SELECT
     AVG(variacion_poblacion_1_anio) AS variacion_media_1_anio,
     AVG(variacion_poblacion_3_anios) AS variacion_media_3_anios,
     AVG(variacion_poblacion_5_anios) AS variacion_media_5_anios
-FROM poblacion;
+FROM ine_poblacion;
 
 -- Poblaciones negativas (imposibles)
 SELECT *
-FROM poblacion
+FROM ine_poblacion
 WHERE poblacion_2025 < 0;

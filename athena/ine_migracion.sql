@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE migracion;
+DESCRIBE ine_migracion;
 
 -- Muestra del dataset
-SELECT * FROM migracion LIMIT 10;
+SELECT * FROM ine_migracion LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM migracion;
+FROM ine_migracion;
 
 -- Municipios duplicados
 SELECT codigo_ine, municipio, anio, COUNT(*) AS repeticiones
-FROM migracion
+FROM ine_migracion
 GROUP BY codigo_ine, municipio, anio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -28,9 +28,9 @@ SELECT
     MIN(saldo_exterior) AS saldo_exterior_minimo,
     MAX(saldo_exterior) AS saldo_exterior_maximo,
     AVG(saldo_exterior) AS saldo_exterior_medio
-FROM migracion;
+FROM ine_migracion;
 
 -- Años distintos del periodo procesado
 SELECT *
-FROM migracion
+FROM ine_migracion
 WHERE anio <> 2024;

@@ -7,7 +7,7 @@ from src.utils.descargar_archivo import descargar_archivo
 
 
 URL = (
-    "https://www.ine.es/jaxiT3/files/t/csv_bdsc/33799.csv"
+    "https://ine.es/jaxiT3/files/t/es/csv_bdsc/68542.csv"
 )
 
 RAW_BUCKET = os.environ["RAW_BUCKET"]

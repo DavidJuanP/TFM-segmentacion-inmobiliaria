@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE renta_parquet;
+DESCRIBE ine_renta;
 
 -- Muestra del dataset
-SELECT * FROM renta_parquet LIMIT 10;
+SELECT * FROM ine_renta LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM renta_parquet;
+FROM ine_renta;
 
 -- Municipios y años duplicados
 SELECT codigo_ine, municipio, anio, COUNT(*) AS repeticiones
-FROM renta_parquet
+FROM ine_renta
 GROUP BY codigo_ine, municipio, anio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -27,11 +27,11 @@ SELECT
     MIN(renta_neta_media_hogar_eur) AS renta_hogar_minima,
     MAX(renta_neta_media_hogar_eur) AS renta_hogar_maxima,
     AVG(renta_neta_media_hogar_eur) AS renta_hogar_media
-FROM renta_parquet;
+FROM ine_renta;
 
 -- Rentas negativas (imposibles)
 SELECT *
-FROM renta_parquet
+FROM ine_renta
 WHERE renta_neta_media_persona_eur < 0
    OR renta_mediana_unidad_consumo_eur < 0
    OR renta_neta_media_hogar_eur < 0;

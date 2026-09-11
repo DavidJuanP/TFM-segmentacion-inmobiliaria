@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE viviendas_turisticas_parquet;
+DESCRIBE ine_viviendas_turisticas;
 
 -- Muestra del dataset
-SELECT * FROM viviendas_turisticas_parquet LIMIT 10;
+SELECT * FROM ine_viviendas_turisticas LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM viviendas_turisticas_parquet;
+FROM ine_viviendas_turisticas;
 
 -- Municipios y periodos duplicados
 SELECT codigo_ine, municipio, periodo, COUNT(*) AS repeticiones
-FROM viviendas_turisticas_parquet
+FROM ine_viviendas_turisticas
 GROUP BY codigo_ine, municipio, periodo
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -25,11 +25,11 @@ SELECT
     MAX(plazas) AS plazas_maximas,
     AVG(plazas) AS plazas_medias,
     AVG(plazas_por_vivienda) AS plazas_por_vivienda_media
-FROM viviendas_turisticas_parquet;
+FROM ine_viviendas_turisticas;
 
 -- Valores negativos o periodos incoherentes
 SELECT *
-FROM viviendas_turisticas_parquet
+FROM ine_viviendas_turisticas
 WHERE viviendas_turisticas < 0
    OR plazas < 0
    OR plazas_por_vivienda < 0

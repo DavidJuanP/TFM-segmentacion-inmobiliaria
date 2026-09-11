@@ -1,17 +1,17 @@
 -- Esquema de la tabla
-DESCRIBE transacciones;
+DESCRIBE mivau_transacciones;
 
 -- Muestra del dataset
-SELECT * FROM transacciones LIMIT 10;
+SELECT * FROM mivau_transacciones LIMIT 10;
 
 -- Filas y provincias distintas
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_provincia) AS provincias
-FROM transacciones;
+FROM mivau_transacciones;
 
 -- Registros duplicados en la granularidad del dataset
 SELECT codigo_provincia, provincia, anio, trimestre, tipo_vivienda,
        COUNT(*) AS repeticiones
-FROM transacciones
+FROM mivau_transacciones
 GROUP BY codigo_provincia, provincia, anio, trimestre, tipo_vivienda
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -27,11 +27,11 @@ SELECT
     MAX(valor_transacciones_eur) AS valor_maximo,
     AVG(valor_transacciones_eur) AS valor_medio,
     approx_percentile(valor_transacciones_eur, 0.5) AS valor_mediano
-FROM transacciones;
+FROM mivau_transacciones;
 
 -- Valores negativos o trimestres fuera de rango
 SELECT *
-FROM transacciones
+FROM mivau_transacciones
 WHERE numero_transacciones < 0
    OR valor_transacciones_eur < 0
    OR trimestre NOT BETWEEN 1 AND 4;
