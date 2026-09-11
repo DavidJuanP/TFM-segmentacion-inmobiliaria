@@ -57,6 +57,7 @@ Resources:
                   - s3:GetObjectVersion
                 Resource:
                   - !Sub "arn:${AWS::Partition}:s3:::${RawDataBucketName}/*"
+                  - !Sub "arn:${AWS::Partition}:s3:::${ProcessedDataBucketName}/*"
                   - !Sub "arn:${AWS::Partition}:s3:::${ScriptsBucketName}/*"
               - Effect: Allow
                 Action:
@@ -457,6 +458,26 @@ Resources:
         "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
         "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
         "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
+        "--library-set": analytics
+      ExecutionProperty:
+        MaxConcurrentRuns: 1
+      MaxCapacity: 1
+      MaxRetries: 0
+      Timeout: 120
+
+  JoinMunicipalJob:
+    Type: AWS::Glue::Job
+    Properties:
+      Name: !Sub "${ProjectName}-processing-join-municipal"
+      Role: !GetAtt GlueProcessingRole.Arn
+      Command:
+        Name: pythonshell
+        PythonVersion: "3.9"
+        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/join_municipal.py"
+      DefaultArguments:
+        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
+        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
+        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1"
         "--library-set": analytics
       ExecutionProperty:
         MaxConcurrentRuns: 1
