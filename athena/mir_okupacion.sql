@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE okupacion;
+DESCRIBE mir_okupacion;
 
 -- Muestra del dataset
-SELECT * FROM okupacion LIMIT 10;
+SELECT * FROM mir_okupacion LIMIT 10;
 
 -- Filas y comunidades distintas
 SELECT COUNT(*) AS filas, COUNT(DISTINCT comunidad) AS comunidades
-FROM okupacion;
+FROM mir_okupacion;
 
 -- Comunidades y años duplicados
 SELECT comunidad, anio, COUNT(*) AS repeticiones
-FROM okupacion
+FROM mir_okupacion
 GROUP BY comunidad, anio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -23,9 +23,9 @@ SELECT
     STDDEV(total_okupaciones) AS desviacion_estandar,
     AVG(total_okupaciones) AS media,
     approx_percentile(total_okupaciones, 0.5) AS mediana
-FROM okupacion;
+FROM mir_okupacion;
 
 -- Valores negativos (imposibles)
 SELECT *
-FROM okupacion
+FROM mir_okupacion
 WHERE total_okupaciones < 0;

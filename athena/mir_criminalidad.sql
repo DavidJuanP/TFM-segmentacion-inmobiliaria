@@ -1,16 +1,16 @@
 -- Esquema de la tabla
-DESCRIBE criminalidad;
+DESCRIBE mir_criminalidad;
 
 -- Muestra del dataset
-SELECT * FROM criminalidad LIMIT 10;
+SELECT * FROM mir_criminalidad LIMIT 10;
 
 -- Filas y municipios distintos
 SELECT COUNT(*) AS filas, COUNT(DISTINCT codigo_ine) AS municipios
-FROM criminalidad;
+FROM mir_criminalidad;
 
 -- Municipios duplicados
 SELECT codigo_ine, municipio, anio, COUNT(*) AS repeticiones
-FROM criminalidad
+FROM mir_criminalidad
 GROUP BY codigo_ine, municipio, anio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
@@ -23,9 +23,9 @@ SELECT
     STDDEV(total_infracciones) AS desviacion_estandar,
     AVG(total_infracciones) AS media,
     approx_percentile(total_infracciones, 0.5) AS mediana
-FROM criminalidad;
+FROM mir_criminalidad;
 
 -- Valores negativos o años distintos del procesado
 SELECT *
-FROM criminalidad
+FROM mir_criminalidad
 WHERE total_infracciones < 0 OR anio <> 2025;
