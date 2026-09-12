@@ -58,10 +58,6 @@ ARCHIVOS_ENTRADA = {
     "paro": "sepe/paro.parquet",
 }
 
-# No se incluyen por ahora:
-# - mivau/transacciones.parquet: granularidad provincial.
-# - mir/okupacion.parquet: granularidad de comunidad autónoma.
-
 COLUMNAS_CATASTRO_METRICAS = [
     "anio_ultima_revision",
     "inmuebles_urbanos",
@@ -273,6 +269,124 @@ def unir_dataset(
     return resultado
 
 
+def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
+    resultado = df.copy()
+    validar_columnas(
+        resultado,
+        [
+            "poblacion_2025",
+            "variacion_poblacion_1_anio",
+            "saldo_interior",
+            "saldo_exterior",
+            "viviendas_turisticas",
+            "paro_medio_2025",
+            "superficie_km2",
+            "superficie_urbana_m2",
+            "anio_catastro",
+            "anio_catastro_2021",
+            "inmuebles_residenciales",
+            "inmuebles_residenciales_catastro_2021",
+            "valor_catastral_residencial_medio_eur",
+            "valor_catastral_residencial_medio_eur_catastro_2021",
+            "superficie_urbana_m2_catastro_2021",
+            "valor_catastral_suelo_eur_m2",
+            "valor_catastral_suelo_eur_m2_catastro_2021",
+        ],
+    )
+
+    anios_catastro = set(
+        resultado["anio_catastro"].dropna().astype("int64").unique()
+    )
+    anios_catastro_2021 = set(
+        resultado["anio_catastro_2021"].dropna().astype("int64").unique()
+    )
+    if anios_catastro != {2026} or anios_catastro_2021 != {2021}:
+        raise ValueError(
+            "Los periodos del Catastro no forman el intervalo 2021-2026. "
+            f"Años actuales: {sorted(anios_catastro)}; "
+            f"años de referencia: {sorted(anios_catastro_2021)}"
+        )
+
+    # Los saldos migratorios son de 2024. La población de ese mismo año se
+    # reconstruye a partir de la población de 2025 y su variación anual:
+    # variacion_poblacion_1_anio = poblacion_2025 - poblacion_2024.
+    poblacion_2024 = (
+        resultado["poblacion_2025"]
+        - resultado["variacion_poblacion_1_anio"]
+    ).where(lambda valores: valores.gt(0))
+
+    resultado["saldo_interior_por_1000_habitantes"] = (
+        resultado["saldo_interior"] / poblacion_2024 * 1_000
+    ).round(2).astype("Float64")
+    resultado["saldo_exterior_por_1000_habitantes"] = (
+        resultado["saldo_exterior"] / poblacion_2024 * 1_000
+    ).round(2).astype("Float64")
+
+    # El último periodo turístico disponible es 2026M05. Al no disponer de
+    # población de 2026, se utiliza la población de 2025 como aproximación.
+    poblacion_2025_valida = resultado["poblacion_2025"].where(
+        resultado["poblacion_2025"].gt(0)
+    )
+    resultado["viviendas_turisticas_por_1000_habitantes"] = (
+        resultado["viviendas_turisticas"] / poblacion_2025_valida * 1_000
+    ).round(2).astype("Float64")
+    resultado["paro_por_1000_habitantes"] = (
+        resultado["paro_medio_2025"] / poblacion_2025_valida * 1_000
+    ).round(2).astype("Float64")
+
+    # La superficie municipal del IGN está expresada en km2 y la superficie
+    # urbana del Catastro en m2; 1 km2 equivale a 1.000.000 m2.
+    superficie_municipal_m2 = (
+        resultado["superficie_km2"] * 1_000_000
+    ).where(lambda valores: valores.gt(0))
+    resultado["porcentaje_superficie_urbana"] = (
+        resultado["superficie_urbana_m2"]
+        / superficie_municipal_m2
+        * 100
+    ).round(2).astype("Float64")
+
+    # Variaciones absolutas del Catastro entre 2021 y 2026.
+    resultado["variacion_inmuebles_residenciales_5_anios"] = (
+        resultado["inmuebles_residenciales"]
+        - resultado["inmuebles_residenciales_catastro_2021"]
+    ).astype("Int64")
+    resultado[
+        "variacion_valor_catastral_residencial_medio_eur_5_anios"
+    ] = (
+        resultado["valor_catastral_residencial_medio_eur"]
+        - resultado[
+            "valor_catastral_residencial_medio_eur_catastro_2021"
+        ]
+    ).round(2).astype("Float64")
+    resultado["variacion_superficie_urbana_m2_5_anios"] = (
+        resultado["superficie_urbana_m2"]
+        - resultado["superficie_urbana_m2_catastro_2021"]
+    ).astype("Int64")
+    resultado[
+        "variacion_valor_catastral_suelo_eur_m2_5_anios"
+    ] = (
+        resultado["valor_catastral_suelo_eur_m2"]
+        - resultado["valor_catastral_suelo_eur_m2_catastro_2021"]
+    ).round(2).astype("Float64")
+
+    # El Catastro actual es de 2026 y la población más reciente disponible es
+    # de 2025. Se usa esta última como aproximación para expresar tanto el
+    # stock residencial como su incremento 2021-2026 por habitante actual.
+    resultado["inmuebles_residenciales_por_1000_habitantes"] = (
+        resultado["inmuebles_residenciales"]
+        / poblacion_2025_valida
+        * 1_000
+    ).round(2).astype("Float64")
+    resultado[
+        "variacion_inmuebles_residenciales_5_anios_por_1000_habitantes"
+    ] = (
+        resultado["variacion_inmuebles_residenciales_5_anios"]
+        / poblacion_2025_valida
+        * 1_000
+    ).round(2).astype("Float64")
+    return resultado
+
+
 def preparar_dataset(nombre: str, df: pd.DataFrame) -> pd.DataFrame:
     if nombre == "catastro":
         return preparar_catastro(df)
@@ -321,6 +435,7 @@ def procesar_datos(datos: dict) -> pd.DataFrame:
         dataset = preparar_dataset(nombre, datos[nombre])
         resultado = unir_dataset(resultado, dataset, nombre)
 
+    resultado = calcular_variables(resultado)
     validar_claves(
         resultado,
         ["codigo_ine"],
@@ -341,6 +456,7 @@ def main() -> None:
         dataset = preparar_dataset(nombre, leer_parquet(nombre))
         resultado = unir_dataset(resultado, dataset, nombre)
 
+    resultado = calcular_variables(resultado)
     validar_claves(
         resultado,
         ["codigo_ine"],
