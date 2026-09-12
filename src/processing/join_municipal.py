@@ -41,19 +41,26 @@ ARCHIVOS_ENTRADA = {
     "catastro": "catastro/urbana.parquet",
     "catastro_2021": "catastro/urbana_2021.parquet",
     "edad": "ine_edad/edad.parquet",
-    "migracion": "ine/migracion.parquet",
-    "poblacion": "ine/poblacion.parquet",
-    "renta": "ine/renta.parquet",
-    "tamanio_hogar": "ine/tamanio_hogar.parquet",
-    "viviendas": "ine/viviendas.parquet",
-    "viviendas_turisticas": "ine/viviendas_turisticas.parquet",
-    "criminalidad": "mir/criminalidad.parquet",
+    "migracion": "ine_migracion/migracion.parquet",
+    "poblacion": "ine_poblacion/poblacion.parquet",
+    "renta": "ine_renta/renta.parquet",
+    "tamanio_hogar": "ine_tamanio_hogar/tamanio_hogar.parquet",
+    "viviendas": "ine_viviendas/viviendas.parquet",
+    "viviendas_turisticas": (
+        "ine_viviendas_turisticas/viviendas_turisticas.parquet"
+    ),
+    "criminalidad": "mir_criminalidad/criminalidad.parquet",
     "distancia_costa": "mit/distancia_costa.parquet",
-    "alquiler": "mivau/alquiler.parquet",
-    "transacciones": "mivau/transacciones_municipales.parquet",
-    "transacciones_nuevas": "mivau/transacciones_nuevas.parquet",
+    "alquiler": "mivau_alquiler/alquiler.parquet",
+    "transacciones": (
+        "mivau_transacciones_municipales/transacciones_municipales.parquet"
+    ),
+    "transacciones_nuevas": (
+        "mivau_transacciones_nuevas/transacciones_nuevas.parquet"
+    ),
     "transacciones_segunda_mano": (
-        "mivau/transacciones_segunda_mano.parquet"
+        "mivau_transacciones_segunda_mano/"
+        "transacciones_segunda_mano.parquet"
     ),
     "paro": "sepe/paro.parquet",
 }
