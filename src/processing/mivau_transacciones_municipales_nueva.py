@@ -1,6 +1,6 @@
 '''
 Calcula las transacciones municipales de vivienda nueva de 2025 y sus
-variaciones a 1, 3 y 5 años.
+diferencias absolutas a 1, 3 y 5 años.
 
 '''
 
@@ -59,14 +59,14 @@ RUTA_SALIDA = Path("/tmp/processed/mivau/transacciones_nuevas.parquet")
 
 COLUMNAS_TRANSACCIONES = {
     "transacciones_2025": "transacciones_nuevas_2025",
-    "variacion_transacciones_1_anio": (
-        "variacion_transacciones_nuevas_1_anio"
+    "diferencia_transacciones_1_anio": (
+        "diferencia_transacciones_nuevas_1_anio"
     ),
-    "variacion_transacciones_3_anios": (
-        "variacion_transacciones_nuevas_3_anios"
+    "diferencia_transacciones_3_anios": (
+        "diferencia_transacciones_nuevas_3_anios"
     ),
-    "variacion_transacciones_5_anios": (
-        "variacion_transacciones_nuevas_5_anios"
+    "diferencia_transacciones_5_anios": (
+        "diferencia_transacciones_nuevas_5_anios"
     ),
 }
 
@@ -125,9 +125,9 @@ def main() -> None:
     )
     for numero_anios in HORIZONTES:
         sufijo = "anio" if numero_anios == 1 else "anios"
-        columna = f"variacion_transacciones_nuevas_{numero_anios}_{sufijo}"
+        columna = f"diferencia_transacciones_nuevas_{numero_anios}_{sufijo}"
         print(
-            f"Variaciones a {numero_anios} año(s) ausentes: "
+            f"Diferencias a {numero_anios} año(s) ausentes: "
             f"{df_limpio[columna].isna().sum():,}"
         )
     print(f"Salida: {salida_s3}")

@@ -23,9 +23,9 @@ SELECT
     STDDEV(transacciones_2025) AS desviacion_estandar,
     AVG(transacciones_2025) AS media,
     approx_percentile(transacciones_2025, 0.5) AS mediana,
-    AVG(variacion_transacciones_1_anio) AS variacion_media_1_anio,
-    AVG(variacion_transacciones_3_anios) AS variacion_media_3_anios,
-    AVG(variacion_transacciones_5_anios) AS variacion_media_5_anios
+    AVG(diferencia_transacciones_1_anio) AS diferencia_media_1_anio,
+    AVG(diferencia_transacciones_3_anios) AS diferencia_media_3_anios,
+    AVG(diferencia_transacciones_5_anios) AS diferencia_media_5_anios
 FROM mivau_transacciones_municipales;
 
 -- Transacciones negativas (imposibles)

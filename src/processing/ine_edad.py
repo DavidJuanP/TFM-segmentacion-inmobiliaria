@@ -175,7 +175,7 @@ def procesar_datos(
     anios_ausentes = anios_necesarios.difference(resultado["anio"].unique())
     if anios_ausentes:
         raise ValueError(
-            "Faltan años necesarios para calcular las variaciones de edad: "
+            "Faltan años necesarios para calcular las diferencias de edad: "
             f"{sorted(anios_ausentes)}"
         )
 
@@ -192,8 +192,8 @@ def procesar_datos(
     for numero_anios, anio_anterior in HORIZONTES.items():
         columna_anterior = f"edad_media_{anio_anterior}"
         sufijo = "anio" if numero_anios == 1 else "anios"
-        columna_variacion = (
-            f"variacion_edad_media_{numero_anios}_{sufijo}"
+        columna_diferencia = (
+            f"diferencia_edad_media_{numero_anios}_{sufijo}"
         )
         edad_anterior = resultado.loc[
             resultado["anio"].eq(anio_anterior),
@@ -205,7 +205,7 @@ def procesar_datos(
             how="left",
             validate="one_to_one",
         )
-        edad_referencia[columna_variacion] = (
+        edad_referencia[columna_diferencia] = (
             edad_referencia["edad_media_2025"]
             - edad_referencia.pop(columna_anterior)
         ).round(2).astype("Float64")
@@ -213,14 +213,14 @@ def procesar_datos(
     validar_claves(
         edad_referencia,
         ["codigo_ine"],
-        nombre="variaciones de edad media",
+        nombre="diferencias de edad media",
     )
     columnas = [
         "codigo_ine",
         "municipio",
         "edad_media_2025",
-        "variacion_edad_media_1_anio",
-        "variacion_edad_media_3_anios",
+        "diferencia_edad_media_1_anio",
+        "diferencia_edad_media_3_anios",
     ]
     return edad_referencia[columnas].sort_values(
         "codigo_ine"
@@ -247,9 +247,9 @@ def main() -> None:
     )
     for numero_anios in HORIZONTES:
         sufijo = "anio" if numero_anios == 1 else "anios"
-        columna = f"variacion_edad_media_{numero_anios}_{sufijo}"
+        columna = f"diferencia_edad_media_{numero_anios}_{sufijo}"
         print(
-            f"Variaciones a {numero_anios} año(s) ausentes: "
+            f"Diferencias a {numero_anios} año(s) ausentes: "
             f"{df_limpio[columna].isna().sum():,}"
         )
     print(f"Salida: {salida_s3}")

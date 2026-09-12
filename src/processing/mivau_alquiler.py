@@ -1,5 +1,7 @@
 '''
-Normaliza los indicadores municipales de alquiler del MIVAU.
+Normaliza los indicadores municipales de alquiler del MIVAU y sustituye los
+percentiles 25 y 75 por su rango intercuartílico. El recuento de viviendas
+testigo se descarta de la salida.
 
 '''
 
@@ -95,6 +97,72 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
         "tipo_medida",
     ]
     validar_claves(resultado, claves, nombre="indicadores de alquiler")
+    medidas_disponibles = set(resultado["tipo_medida"].dropna())
+    percentiles_necesarios = {"PERCENT25", "PERCENT75"}
+    percentiles_ausentes = percentiles_necesarios.difference(
+        medidas_disponibles
+    )
+    if percentiles_ausentes:
+        raise ValueError(
+            "Faltan percentiles para calcular el rango intercuartílico: "
+            f"{sorted(percentiles_ausentes)}"
+        )
+
+    # El rango intercuartílico conserva la dispersión central en una sola
+    # variable: IQR = percentil 75 - percentil 25.
+    dimensiones = [
+        "codigo_ine",
+        "municipio",
+        "codigo_provincia",
+        "provincia",
+        "anio",
+        "tipo_vivienda",
+        "elemento",
+    ]
+    percentil_25 = resultado.loc[
+        resultado["tipo_medida"].eq("PERCENT25"),
+        [*dimensiones, "valor"],
+    ].rename(columns={"valor": "percentil_25"})
+    percentil_75 = resultado.loc[
+        resultado["tipo_medida"].eq("PERCENT75"),
+        [*dimensiones, "valor"],
+    ].rename(columns={"valor": "percentil_75"})
+    rangos = percentil_25.merge(
+        percentil_75,
+        on=dimensiones,
+        how="outer",
+        validate="one_to_one",
+    )
+    rangos["tipo_medida"] = "RANGO_INTERCUARTILICO"
+    rangos["valor"] = (
+        rangos["percentil_75"] - rangos["percentil_25"]
+    ).round(2).astype("Float64")
+    rangos_negativos = rangos["valor"].lt(0).fillna(False)
+    if rangos_negativos.any():
+        ejemplos = rangos.loc[
+            rangos_negativos,
+            ["codigo_ine", "anio", "elemento", "tipo_vivienda", "valor"],
+        ].head(5).to_dict("records")
+        raise ValueError(
+            "Hay rangos intercuartílicos negativos. "
+            f"Ejemplos: {ejemplos}"
+        )
+    rangos = rangos[[*dimensiones, "tipo_medida", "valor"]]
+
+    resultado = pd.concat(
+        [
+            resultado.loc[
+                resultado["tipo_medida"].eq("MEDIANA")
+            ],
+            rangos,
+        ],
+        ignore_index=True,
+    )
+    validar_claves(
+        resultado,
+        claves,
+        nombre="indicadores de alquiler con rango intercuartílico",
+    )
     resultado["anio"] = resultado["anio"].astype("int16")
     columnas = [
         "codigo_ine",

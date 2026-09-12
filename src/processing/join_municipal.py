@@ -78,6 +78,36 @@ COLUMNAS_CATASTRO_METRICAS = [
     "valor_catastral_residencial_medio_eur",
 ]
 
+ANIO_ALQUILER_REFERENCIA = 2024
+HORIZONTES_ALQUILER = {1: 2023, 3: 2021}
+VARIABLES_ALQUILER_BASE = [
+    "alquiler_precio_colectiva_mediana",
+    "alquiler_precio_colectiva_rango_intercuartilico",
+    "alquiler_precio_unifamiliar_mediana",
+    "alquiler_precio_unifamiliar_rango_intercuartilico",
+    "alquiler_superficie_colectiva_mediana",
+    "alquiler_superficie_colectiva_rango_intercuartilico",
+    "alquiler_superficie_unifamiliar_mediana",
+    "alquiler_superficie_unifamiliar_rango_intercuartilico",
+]
+VARIABLES_ALQUILER_CALCULADAS = [
+    "alquiler_colectiva_aproximado_eur_m2",
+    "alquiler_unifamiliar_aproximado_eur_m2",
+]
+VARIABLES_ALQUILER_VARIACION = [
+    "alquiler_precio_colectiva_mediana",
+    "alquiler_precio_unifamiliar_mediana",
+    *VARIABLES_ALQUILER_CALCULADAS,
+]
+VARIABLES_ALQUILER_DIFERENCIA = [
+    "alquiler_precio_colectiva_rango_intercuartilico",
+    "alquiler_precio_unifamiliar_rango_intercuartilico",
+    "alquiler_superficie_colectiva_mediana",
+    "alquiler_superficie_colectiva_rango_intercuartilico",
+    "alquiler_superficie_unifamiliar_mediana",
+    "alquiler_superficie_unifamiliar_rango_intercuartilico",
+]
+
 
 def ruta_local(clave_s3: str) -> Path:
     return RUTA_BASE / Path(clave_s3)
@@ -214,12 +244,71 @@ def nombre_columna_alquiler(fila: pd.Series) -> str:
     return f"alquiler_{texto}"
 
 
+def pivotar_alquiler(df: pd.DataFrame, anio: int) -> pd.DataFrame:
+    resultado = df.loc[df["anio"].eq(anio)].copy()
+    validar_claves(
+        resultado,
+        ["codigo_ine", "variable"],
+        nombre=f"alquiler municipal de {anio}",
+    )
+    resultado = resultado.pivot(
+        index="codigo_ine", columns="variable", values="valor"
+    ).reset_index()
+    resultado.columns.name = None
+    validar_columnas(resultado, ["codigo_ine", *VARIABLES_ALQUILER_BASE])
+    resultado = resultado[["codigo_ine", *VARIABLES_ALQUILER_BASE]]
+
+    # Aproximación al alquiler mensual por m2. Es un cociente de medianas,
+    # no la mediana de los alquileres individuales por m2.
+    for tipo_vivienda in ["colectiva", "unifamiliar"]:
+        precio = resultado[
+            f"alquiler_precio_{tipo_vivienda}_mediana"
+        ]
+        superficie = resultado[
+            f"alquiler_superficie_{tipo_vivienda}_mediana"
+        ].where(lambda valores: valores.gt(0))
+        resultado[
+            f"alquiler_{tipo_vivienda}_aproximado_eur_m2"
+        ] = (precio / superficie).round(2).astype("Float64")
+
+    validar_claves(
+        resultado,
+        ["codigo_ine"],
+        nombre=f"alquiler pivotado de {anio}",
+    )
+    return resultado
+
+
 def preparar_alquiler(df: pd.DataFrame) -> pd.DataFrame:
     dimensiones = ["elemento", "tipo_vivienda", "tipo_medida"]
     columnas = ["codigo_ine", "anio", *dimensiones, "valor"]
     validar_columnas(df, columnas)
-    resultado = seleccionar_ultimo_anio(df[columnas], "alquiler")
-    anio = int(resultado["anio"].iat[0])
+    medidas = set(df["tipo_medida"].dropna().astype("string").str.strip())
+    medidas_esperadas = {"MEDIANA", "RANGO_INTERCUARTILICO"}
+    medidas_inesperadas = medidas.difference(medidas_esperadas)
+    if medidas_inesperadas:
+        raise ValueError(
+            "El alquiler procesado contiene medidas no esperadas: "
+            f"{sorted(medidas_inesperadas)}"
+        )
+    if "RANGO_INTERCUARTILICO" not in medidas:
+        raise ValueError(
+            "El alquiler procesado no contiene el rango intercuartílico"
+        )
+    resultado = df[columnas].copy()
+    resultado["anio"] = pd.to_numeric(resultado["anio"], errors="coerce")
+    anios_necesarios = {
+        ANIO_ALQUILER_REFERENCIA,
+        *HORIZONTES_ALQUILER.values(),
+    }
+    anios_ausentes = anios_necesarios.difference(
+        resultado["anio"].dropna().astype("int64").unique()
+    )
+    if anios_ausentes:
+        raise ValueError(
+            "Faltan años necesarios para calcular las variaciones de "
+            f"alquiler: {sorted(anios_ausentes)}"
+        )
     resultado["variable"] = resultado.apply(
         nombre_columna_alquiler, axis="columns"
     )
@@ -233,18 +322,78 @@ def preparar_alquiler(df: pd.DataFrame) -> pd.DataFrame:
             f"Ejemplos: {ejemplos}"
         )
 
-    validar_claves(
+    variables = [*VARIABLES_ALQUILER_BASE, *VARIABLES_ALQUILER_CALCULADAS]
+    variables_cambio = [
+        *VARIABLES_ALQUILER_VARIACION,
+        *VARIABLES_ALQUILER_DIFERENCIA,
+    ]
+    alquiler_referencia = pivotar_alquiler(
         resultado,
-        ["codigo_ine", "variable"],
-        nombre="alquiler municipal del último año",
+        ANIO_ALQUILER_REFERENCIA,
     )
-    resultado = resultado.pivot(
-        index="codigo_ine", columns="variable", values="valor"
-    ).reset_index()
-    resultado.columns.name = None
-    resultado.insert(1, "anio_alquiler", anio)
-    validar_claves(resultado, ["codigo_ine"], nombre="alquiler pivotado")
-    return resultado
+    alquiler_referencia.insert(
+        1,
+        "anio_alquiler",
+        ANIO_ALQUILER_REFERENCIA,
+    )
+
+    # Los precios se comparan en porcentaje. Las superficies y los rangos
+    # intercuartílicos se comparan mediante diferencias absolutas.
+    columnas_cambio = []
+    for numero_anios, anio_anterior in HORIZONTES_ALQUILER.items():
+        alquiler_anterior = pivotar_alquiler(resultado, anio_anterior)
+        columnas_anteriores = {
+            variable: f"{variable}_{anio_anterior}"
+            for variable in variables_cambio
+        }
+        alquiler_anterior = alquiler_anterior[
+            ["codigo_ine", *variables_cambio]
+        ].rename(columns=columnas_anteriores)
+        alquiler_referencia = alquiler_referencia.merge(
+            alquiler_anterior,
+            on="codigo_ine",
+            how="left",
+            validate="one_to_one",
+        )
+        sufijo = "anio" if numero_anios == 1 else "anios"
+        for variable in VARIABLES_ALQUILER_VARIACION:
+            columna_anterior = columnas_anteriores[variable]
+            columna_variacion = (
+                f"variacion_{variable}_{numero_anios}_{sufijo}"
+            )
+            valor_anterior = alquiler_referencia.pop(
+                columna_anterior
+            ).where(lambda valores: valores.gt(0))
+            alquiler_referencia[columna_variacion] = (
+                (alquiler_referencia[variable] - valor_anterior)
+                / valor_anterior
+                * 100
+            ).round(2).astype("Float64")
+            columnas_cambio.append(columna_variacion)
+
+        for variable in VARIABLES_ALQUILER_DIFERENCIA:
+            columna_anterior = columnas_anteriores[variable]
+            columna_diferencia = (
+                f"diferencia_{variable}_{numero_anios}_{sufijo}"
+            )
+            alquiler_referencia[columna_diferencia] = (
+                alquiler_referencia[variable]
+                - alquiler_referencia.pop(columna_anterior)
+            ).round(2).astype("Float64")
+            columnas_cambio.append(columna_diferencia)
+
+    columnas_salida = [
+        "codigo_ine",
+        "anio_alquiler",
+        *variables,
+        *columnas_cambio,
+    ]
+    validar_claves(
+        alquiler_referencia,
+        ["codigo_ine"],
+        nombre="alquiler y variaciones municipales",
+    )
+    return alquiler_referencia[columnas_salida]
 
 
 def unir_dataset(
@@ -298,6 +447,18 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
             "superficie_urbana_m2_catastro_2021",
             "valor_catastral_suelo_eur_m2",
             "valor_catastral_suelo_eur_m2_catastro_2021",
+            "transacciones_2025",
+            "diferencia_transacciones_1_anio",
+            "diferencia_transacciones_3_anios",
+            "diferencia_transacciones_5_anios",
+            "transacciones_nuevas_2025",
+            "diferencia_transacciones_nuevas_1_anio",
+            "diferencia_transacciones_nuevas_3_anios",
+            "diferencia_transacciones_nuevas_5_anios",
+            "transacciones_segunda_mano_2025",
+            "diferencia_transacciones_segunda_mano_1_anio",
+            "diferencia_transacciones_segunda_mano_3_anios",
+            "diferencia_transacciones_segunda_mano_5_anios",
         ],
     )
 
@@ -315,11 +476,13 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
         )
 
     # Los saldos migratorios son de 2024. La población de ese mismo año se
-    # reconstruye a partir de la población de 2025 y su variación anual:
-    # variacion_poblacion_1_anio = poblacion_2025 - poblacion_2024.
+    # reconstruye a partir de la población de 2025 y su variación porcentual:
+    # poblacion_2025 = poblacion_2024 * (1 + variacion / 100).
+    factor_variacion_2024_2025 = (
+        1 + resultado["variacion_poblacion_1_anio"] / 100
+    ).where(lambda valores: valores.gt(0))
     poblacion_2024 = (
-        resultado["poblacion_2025"]
-        - resultado["variacion_poblacion_1_anio"]
+        resultado["poblacion_2025"] / factor_variacion_2024_2025
     ).where(lambda valores: valores.gt(0))
 
     resultado["saldo_interior_por_1000_habitantes"] = (
@@ -346,34 +509,62 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
     superficie_municipal_m2 = (
         resultado["superficie_km2"] * 1_000_000
     ).where(lambda valores: valores.gt(0))
-    resultado["porcentaje_superficie_urbana"] = (
+    porcentaje_superficie_urbana_2026 = (
         resultado["superficie_urbana_m2"]
         / superficie_municipal_m2
         * 100
+    )
+    porcentaje_superficie_urbana_2021 = (
+        resultado["superficie_urbana_m2_catastro_2021"]
+        / superficie_municipal_m2
+        * 100
+    )
+    resultado["porcentaje_superficie_urbana"] = (
+        porcentaje_superficie_urbana_2026.round(2).astype("Float64")
+    )
+    resultado["diferencia_porcentaje_superficie_urbana_5_anios"] = (
+        porcentaje_superficie_urbana_2026
+        - porcentaje_superficie_urbana_2021
     ).round(2).astype("Float64")
 
-    # Variaciones absolutas del Catastro entre 2021 y 2026.
+    # Variaciones porcentuales del Catastro entre 2021 y 2026. Los valores de
+    # referencia nulos o no positivos no permiten calcular una tasa válida.
+    inmuebles_residenciales_2021_validos = resultado[
+        "inmuebles_residenciales_catastro_2021"
+    ].where(lambda valores: valores.gt(0))
     resultado["variacion_inmuebles_residenciales_5_anios"] = (
-        resultado["inmuebles_residenciales"]
-        - resultado["inmuebles_residenciales_catastro_2021"]
-    ).astype("Int64")
+        (
+            resultado["inmuebles_residenciales"]
+            - inmuebles_residenciales_2021_validos
+        )
+        / inmuebles_residenciales_2021_validos
+        * 100
+    ).round(2).astype("Float64")
+    valor_residencial_medio_2021_valido = resultado[
+        "valor_catastral_residencial_medio_eur_catastro_2021"
+    ].where(lambda valores: valores.gt(0))
     resultado[
         "variacion_valor_catastral_residencial_medio_eur_5_anios"
     ] = (
-        resultado["valor_catastral_residencial_medio_eur"]
-        - resultado[
-            "valor_catastral_residencial_medio_eur_catastro_2021"
-        ]
+        (
+            resultado["valor_catastral_residencial_medio_eur"]
+            - valor_residencial_medio_2021_valido
+        )
+        / valor_residencial_medio_2021_valido
+        * 100
     ).round(2).astype("Float64")
-    resultado["variacion_superficie_urbana_m2_5_anios"] = (
-        resultado["superficie_urbana_m2"]
-        - resultado["superficie_urbana_m2_catastro_2021"]
-    ).astype("Int64")
+    valor_suelo_m2_2021_valido = resultado[
+        "valor_catastral_suelo_eur_m2_catastro_2021"
+    ].where(lambda valores: valores.gt(0))
     resultado[
         "variacion_valor_catastral_suelo_eur_m2_5_anios"
     ] = (
-        resultado["valor_catastral_suelo_eur_m2"]
-        - resultado["valor_catastral_suelo_eur_m2_catastro_2021"]
+        (
+            resultado["valor_catastral_suelo_eur_m2"]
+            - valor_suelo_m2_2021_valido
+        )
+        / valor_suelo_m2_2021_valido
+        * 100
     ).round(2).astype("Float64")
 
     # El Catastro actual es de 2026 y la población más reciente disponible es
@@ -385,12 +576,87 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
         * 1_000
     ).round(2).astype("Float64")
     resultado[
-        "variacion_inmuebles_residenciales_5_anios_por_1000_habitantes"
+        "diferencia_inmuebles_residenciales_5_anios_por_1000_habitantes"
     ] = (
-        resultado["variacion_inmuebles_residenciales_5_anios"]
+        (
+            resultado["inmuebles_residenciales"]
+            - resultado["inmuebles_residenciales_catastro_2021"]
+        )
         / poblacion_2025_valida
         * 1_000
     ).round(2).astype("Float64")
+
+    # Indicadores relativos al parque residencial del Catastro de 2026. El
+    # denominador se anula cuando no es positivo. En las transacciones existe
+    # un desfase de un año respecto al dato de 2025.
+    inmuebles_residenciales_validos = resultado[
+        "inmuebles_residenciales"
+    ].where(resultado["inmuebles_residenciales"].gt(0))
+    resultado[
+        "porcentaje_viviendas_turisticas_sobre_inmuebles_residenciales"
+    ] = (
+        resultado["viviendas_turisticas"]
+        / inmuebles_residenciales_validos
+        * 100
+    ).round(2).astype("Float64")
+
+    tipos_transaccion = {
+        "transacciones_2025": (
+            "transacciones_por_1000_inmuebles_residenciales"
+        ),
+        "transacciones_nuevas_2025": (
+            "transacciones_nuevas_por_1000_inmuebles_residenciales"
+        ),
+        "transacciones_segunda_mano_2025": (
+            "transacciones_segunda_mano_por_1000_inmuebles_residenciales"
+        ),
+    }
+    for columna_origen, columna_resultado in tipos_transaccion.items():
+        resultado[columna_resultado] = (
+            resultado[columna_origen]
+            / inmuebles_residenciales_validos
+            * 1_000
+        ).round(2).astype("Float64")
+
+    # Las diferencias temporales se normalizan por el parque residencial de
+    # 2026 para hacer comparables municipios de distinto tamaño. Se eliminan
+    # las diferencias brutas del integrado para evitar variables duplicadas.
+    diferencias_transacciones = {
+        "diferencia_transacciones_1_anio": (
+            "diferencia_transacciones_1_anio_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_3_anios": (
+            "diferencia_transacciones_3_anios_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_5_anios": (
+            "diferencia_transacciones_5_anios_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_nuevas_1_anio": (
+            "diferencia_transacciones_nuevas_1_anio_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_nuevas_3_anios": (
+            "diferencia_transacciones_nuevas_3_anios_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_nuevas_5_anios": (
+            "diferencia_transacciones_nuevas_5_anios_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_segunda_mano_1_anio": (
+            "diferencia_transacciones_segunda_mano_1_anio_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_segunda_mano_3_anios": (
+            "diferencia_transacciones_segunda_mano_3_anios_por_1000_inmuebles_residenciales"
+        ),
+        "diferencia_transacciones_segunda_mano_5_anios": (
+            "diferencia_transacciones_segunda_mano_5_anios_por_1000_inmuebles_residenciales"
+        ),
+    }
+    for columna_origen, columna_resultado in diferencias_transacciones.items():
+        resultado[columna_resultado] = (
+            resultado.pop(columna_origen)
+            / inmuebles_residenciales_validos
+            * 1_000
+        ).round(2).astype("Float64")
+
     return resultado
 
 

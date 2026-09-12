@@ -22,9 +22,9 @@ SELECT
     AVG(poblacion_2025) AS media,
     approx_percentile(poblacion_2025, 0.5) AS mediana,
     STDDEV(poblacion_2025) AS desviacion_estandar,
-    AVG(variacion_poblacion_1_anio) AS variacion_media_1_anio,
-    AVG(variacion_poblacion_3_anios) AS variacion_media_3_anios,
-    AVG(variacion_poblacion_5_anios) AS variacion_media_5_anios
+    AVG(variacion_poblacion_1_anio) AS variacion_porcentual_media_1_anio,
+    AVG(variacion_poblacion_3_anios) AS variacion_porcentual_media_3_anios,
+    AVG(variacion_poblacion_5_anios) AS variacion_porcentual_media_5_anios
 FROM ine_poblacion;
 
 -- Poblaciones negativas (imposibles)

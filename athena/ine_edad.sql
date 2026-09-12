@@ -23,17 +23,17 @@ SELECT
     STDDEV(edad_media_2025) AS desviacion_estandar,
     AVG(edad_media_2025) AS media,
     approx_percentile(edad_media_2025, 0.5) AS mediana,
-    MIN(variacion_edad_media_1_anio) AS variacion_1_anio_minima,
-    MAX(variacion_edad_media_1_anio) AS variacion_1_anio_maxima,
-    AVG(variacion_edad_media_1_anio) AS variacion_1_anio_media,
-    MIN(variacion_edad_media_3_anios) AS variacion_3_anios_minima,
-    MAX(variacion_edad_media_3_anios) AS variacion_3_anios_maxima,
-    AVG(variacion_edad_media_3_anios) AS variacion_3_anios_media
+    MIN(diferencia_edad_media_1_anio) AS diferencia_1_anio_minima,
+    MAX(diferencia_edad_media_1_anio) AS diferencia_1_anio_maxima,
+    AVG(diferencia_edad_media_1_anio) AS diferencia_1_anio_media,
+    MIN(diferencia_edad_media_3_anios) AS diferencia_3_anios_minima,
+    MAX(diferencia_edad_media_3_anios) AS diferencia_3_anios_maxima,
+    AVG(diferencia_edad_media_3_anios) AS diferencia_3_anios_media
 FROM ine_edad;
 
 -- Edades fuera del rango posible
 SELECT *
 FROM ine_edad
 WHERE edad_media_2025 NOT BETWEEN 0 AND 100
-   OR ABS(variacion_edad_media_1_anio) > 100
-   OR ABS(variacion_edad_media_3_anios) > 100;
+   OR ABS(diferencia_edad_media_1_anio) > 100
+   OR ABS(diferencia_edad_media_3_anios) > 100;

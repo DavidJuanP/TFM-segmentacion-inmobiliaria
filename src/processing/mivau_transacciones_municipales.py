@@ -1,5 +1,6 @@
 '''
-Calcula las transacciones municipales de 2025 y sus variaciones a 1, 3 y 5 años.
+Calcula las transacciones municipales de 2025 y sus diferencias absolutas a
+1, 3 y 5 años.
 
 '''
 
@@ -577,10 +578,10 @@ def procesar_datos(
 
     for numero_anios, anio_anterior in HORIZONTES.items():
         columna_anterior = f"transacciones_{anio_anterior}"
-        columna_variacion = (
-            f"variacion_transacciones_{numero_anios}_anio"
+        columna_diferencia = (
+            f"diferencia_transacciones_{numero_anios}_anio"
             if numero_anios == 1
-            else f"variacion_transacciones_{numero_anios}_anios"
+            else f"diferencia_transacciones_{numero_anios}_anios"
         )
         transacciones_anteriores = totales_anuales.loc[
             totales_anuales["anio"].eq(anio_anterior),
@@ -592,7 +593,7 @@ def procesar_datos(
             how="left",
             validate="one_to_one",
         )
-        transacciones_referencia[columna_variacion] = (
+        transacciones_referencia[columna_diferencia] = (
             transacciones_referencia["transacciones_2025"]
             - transacciones_referencia.pop(columna_anterior)
         ).astype("Int64")
@@ -600,15 +601,15 @@ def procesar_datos(
     columnas = [
         *identificadores,
         "transacciones_2025",
-        "variacion_transacciones_1_anio",
-        "variacion_transacciones_3_anios",
-        "variacion_transacciones_5_anios",
+        "diferencia_transacciones_1_anio",
+        "diferencia_transacciones_3_anios",
+        "diferencia_transacciones_5_anios",
     ]
     transacciones_referencia = transacciones_referencia[columnas]
     validar_claves(
         transacciones_referencia,
         ["codigo_ine"],
-        nombre="variaciones de transacciones municipales",
+        nombre="diferencias de transacciones municipales",
     )
     return transacciones_referencia.sort_values("codigo_ine").reset_index(
         drop=True
@@ -641,9 +642,9 @@ def main() -> None:
     )
     for numero_anios in HORIZONTES:
         sufijo = "anio" if numero_anios == 1 else "anios"
-        columna = f"variacion_transacciones_{numero_anios}_{sufijo}"
+        columna = f"diferencia_transacciones_{numero_anios}_{sufijo}"
         print(
-            f"Variaciones a {numero_anios} año(s) ausentes: "
+            f"Diferencias a {numero_anios} año(s) ausentes: "
             f"{df_limpio[columna].isna().sum():,}"
         )
     print(f"Salida: {salida_s3}")

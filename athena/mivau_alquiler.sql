@@ -17,6 +17,17 @@ GROUP BY codigo_ine, municipio, anio, tipo_vivienda, elemento, tipo_medida
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
 
+-- Medidas generadas: solo deben aparecer MEDIANA y RANGO_INTERCUARTILICO
+SELECT
+    elemento,
+    tipo_vivienda,
+    tipo_medida,
+    COUNT(*) AS registros,
+    COUNT(valor) AS valores_disponibles
+FROM mivau_alquiler
+GROUP BY elemento, tipo_vivienda, tipo_medida
+ORDER BY elemento, tipo_vivienda, tipo_medida;
+
 -- Valores negativos (imposibles)
 SELECT *
 FROM mivau_alquiler

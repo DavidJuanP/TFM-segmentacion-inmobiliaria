@@ -1,5 +1,5 @@
 '''
-Procesa los tres indicadores municipales de renta seleccionados del INE.
+Procesa los dos indicadores municipales de renta seleccionados del INE.
 
 '''
 
@@ -48,7 +48,6 @@ COLUMNAS_RAW = {
 }
 METRICAS = {
     "Renta neta media por persona": "renta_neta_media_persona_eur",
-    "Mediana de la renta por unidad de consumo": "renta_mediana_unidad_consumo_eur",
     "Renta neta media por hogar": "renta_neta_media_hogar_eur",
 }
 

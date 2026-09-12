@@ -79,6 +79,16 @@ SELECT
     AVG(tamanio_medio_hogar) AS tamanio_hogar_medio,
     AVG(viviendas_turisticas_por_1000_habitantes)
         AS viviendas_turisticas_por_1000_media,
+    AVG(porcentaje_viviendas_turisticas_sobre_inmuebles_residenciales)
+        AS porcentaje_viviendas_turisticas_medio,
+    AVG(alquiler_colectiva_aproximado_eur_m2)
+        AS alquiler_colectiva_eur_m2_medio,
+    approx_percentile(alquiler_colectiva_aproximado_eur_m2, 0.5)
+        AS alquiler_colectiva_eur_m2_mediana,
+    AVG(alquiler_unifamiliar_aproximado_eur_m2)
+        AS alquiler_unifamiliar_eur_m2_medio,
+    approx_percentile(alquiler_unifamiliar_aproximado_eur_m2, 0.5)
+        AS alquiler_unifamiliar_eur_m2_mediana,
     AVG(paro_por_1000_habitantes) AS paro_por_1000_media,
     AVG(porcentaje_superficie_urbana) AS superficie_urbana_porcentaje_medio,
     AVG(inmuebles_residenciales_por_1000_habitantes)
@@ -88,27 +98,53 @@ SELECT
         AS valor_residencial_medio,
     AVG(transacciones_2025) AS transacciones_media,
     approx_percentile(transacciones_2025, 0.5) AS transacciones_mediana,
+    AVG(transacciones_por_1000_inmuebles_residenciales)
+        AS transacciones_por_1000_inmuebles_media,
+    AVG(transacciones_nuevas_por_1000_inmuebles_residenciales)
+        AS transacciones_nuevas_por_1000_inmuebles_media,
+    AVG(transacciones_segunda_mano_por_1000_inmuebles_residenciales)
+        AS transacciones_segunda_mano_por_1000_inmuebles_media,
     AVG(distancia_costa_km) AS distancia_costa_media
 FROM integrado;
 
 -- Resumen de las variaciones temporales empleadas en el modelo
 SELECT
-    AVG(variacion_poblacion_1_anio) AS variacion_poblacion_1_media,
-    AVG(variacion_poblacion_3_anios) AS variacion_poblacion_3_media,
-    AVG(variacion_poblacion_5_anios) AS variacion_poblacion_5_media,
-    AVG(variacion_edad_media_1_anio) AS variacion_edad_1_media,
-    AVG(variacion_edad_media_3_anios) AS variacion_edad_3_media,
-    AVG(variacion_transacciones_1_anio) AS variacion_transacciones_1_media,
-    AVG(variacion_transacciones_3_anios) AS variacion_transacciones_3_media,
-    AVG(variacion_transacciones_5_anios) AS variacion_transacciones_5_media,
+    AVG(variacion_poblacion_1_anio)
+        AS variacion_porcentual_poblacion_1_media,
+    AVG(variacion_poblacion_3_anios)
+        AS variacion_porcentual_poblacion_3_media,
+    AVG(variacion_poblacion_5_anios)
+        AS variacion_porcentual_poblacion_5_media,
+    AVG(diferencia_edad_media_1_anio) AS diferencia_edad_1_media,
+    AVG(diferencia_edad_media_3_anios) AS diferencia_edad_3_media,
+    AVG(diferencia_transacciones_1_anio_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_1_por_1000_media,
+    AVG(diferencia_transacciones_3_anios_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_3_por_1000_media,
+    AVG(diferencia_transacciones_5_anios_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_5_por_1000_media,
+    AVG(diferencia_transacciones_nuevas_1_anio_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_nuevas_1_por_1000_media,
+    AVG(diferencia_transacciones_nuevas_3_anios_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_nuevas_3_por_1000_media,
+    AVG(diferencia_transacciones_nuevas_5_anios_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_nuevas_5_por_1000_media,
+    AVG(diferencia_transacciones_segunda_mano_1_anio_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_segunda_mano_1_por_1000_media,
+    AVG(diferencia_transacciones_segunda_mano_3_anios_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_segunda_mano_3_por_1000_media,
+    AVG(diferencia_transacciones_segunda_mano_5_anios_por_1000_inmuebles_residenciales)
+        AS diferencia_transacciones_segunda_mano_5_por_1000_media,
     AVG(variacion_inmuebles_residenciales_5_anios)
-        AS variacion_inmuebles_residenciales_media,
+        AS variacion_porcentual_inmuebles_residenciales_media,
     AVG(variacion_valor_catastral_residencial_medio_eur_5_anios)
-        AS variacion_valor_residencial_medio_media,
-    AVG(variacion_superficie_urbana_m2_5_anios)
-        AS variacion_superficie_urbana_media,
+        AS variacion_porcentual_valor_residencial_medio_media,
+    AVG(diferencia_porcentaje_superficie_urbana_5_anios)
+        AS diferencia_superficie_urbana_puntos_media,
     AVG(variacion_valor_catastral_suelo_eur_m2_5_anios)
-        AS variacion_valor_suelo_m2_media
+        AS variacion_porcentual_valor_suelo_m2_media,
+    AVG(diferencia_inmuebles_residenciales_5_anios_por_1000_habitantes)
+        AS diferencia_inmuebles_por_1000_media
 FROM integrado;
 
 -- Valores imposibles o incoherentes que requieren revisión
@@ -124,6 +160,12 @@ WHERE poblacion_2025 <= 0
    OR total_infracciones < 0
    OR paro_medio_2025 < 0
    OR transacciones_2025 < 0
+   OR transacciones_por_1000_inmuebles_residenciales < 0
+   OR transacciones_nuevas_por_1000_inmuebles_residenciales < 0
+   OR transacciones_segunda_mano_por_1000_inmuebles_residenciales < 0
+   OR porcentaje_viviendas_turisticas_sobre_inmuebles_residenciales < 0
+   OR alquiler_colectiva_aproximado_eur_m2 < 0
+   OR alquiler_unifamiliar_aproximado_eur_m2 < 0
    OR inmuebles_residenciales < 0
    OR porcentaje_superficie_urbana < 0
    OR distancia_costa_km < 0;

@@ -1,5 +1,6 @@
 '''
-Calcula la población de 2025 y sus variaciones municipales a 1, 3 y 5 años.
+Calcula la población de 2025 y sus variaciones porcentuales municipales a
+1, 3 y 5 años.
 
 '''
 
@@ -113,10 +114,17 @@ def procesar_datos(df: pd.DataFrame) -> pd.DataFrame:
             how="left",
             validate="one_to_one",
         )
+        poblacion_anterior_valida = poblacion_referencia.pop(
+            columna_anterior
+        ).where(lambda valores: valores.gt(0))
         poblacion_referencia[columna_variacion] = (
-            poblacion_referencia["poblacion_2025"]
-            - poblacion_referencia.pop(columna_anterior)
-        ).astype("Int64")
+            (
+                poblacion_referencia["poblacion_2025"]
+                - poblacion_anterior_valida
+            )
+            / poblacion_anterior_valida
+            * 100
+        ).round(2).astype("Float64")
 
     columnas_salida = [
         "codigo_ine",
@@ -152,7 +160,7 @@ def main() -> None:
         sufijo = "anio" if numero_anios == 1 else "anios"
         columna = f"variacion_poblacion_{numero_anios}_{sufijo}"
         print(
-            f"Variaciones a {numero_anios} año(s) ausentes: "
+            f"Variaciones porcentuales a {numero_anios} año(s) ausentes: "
             f"{df_limpio[columna].isna().sum():,}"
         )
     print(f"Salida: {salida_s3}")
