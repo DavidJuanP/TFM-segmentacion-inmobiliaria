@@ -360,27 +360,6 @@ Resources:
       MaxRetries: 0
       Timeout: 120
 
-  MivauTransaccionesJob:
-    Type: AWS::Glue::Job
-    Properties:
-      Name: !Sub "${ProjectName}-processing-mivau-transacciones"
-      Role: !GetAtt GlueProcessingRole.Arn
-      Command:
-        Name: pythonshell
-        PythonVersion: "3.9"
-        ScriptLocation: !Sub "s3://${ScriptsBucketName}/processing/mivau_transacciones.py"
-      DefaultArguments:
-        "--RAW_BUCKET": !Ref RawDataBucketName
-        "--PROCESSED_BUCKET": !Ref ProcessedDataBucketName
-        "--extra-py-files": !Sub "s3://${ScriptsBucketName}/utils/procesamiento_funciones.py"
-        "--additional-python-modules": "numpy==1.25.2,pandas==2.2.3,pyarrow==12.0.1,openpyxl==3.1.2,xlrd==2.0.1"
-        "--library-set": analytics
-      ExecutionProperty:
-        MaxConcurrentRuns: 1
-      MaxCapacity: 1
-      MaxRetries: 0
-      Timeout: 120
-
   MivauTransaccionesMunicipalesJob:
     Type: AWS::Glue::Job
     Properties:
@@ -512,7 +491,6 @@ Resources:
         - JobName: !Ref MirOkupacionJob
         - JobName: !Ref MitDistanciaCostaJob
         - JobName: !Ref MivauAlquilerJob
-        - JobName: !Ref MivauTransaccionesJob
         - JobName: !Ref MivauTransaccionesMunicipalesJob
         - JobName: !Ref MivauTransaccionesMunicipalesNuevaJob
         - JobName: !Ref MivauTransaccionesMunicipalesSegundaManoJob
