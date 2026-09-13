@@ -5,6 +5,8 @@ pyarrow
 openpyxl
 xlrd
 python-dotenv
+jupyterlab
+ipykernel
 
 scikit-learn
 scipy
