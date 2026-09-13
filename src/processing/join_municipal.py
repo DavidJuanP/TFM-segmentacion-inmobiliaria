@@ -108,6 +108,21 @@ VARIABLES_ALQUILER_DIFERENCIA = [
     "alquiler_superficie_unifamiliar_rango_intercuartilico",
 ]
 
+COLUMNAS_TEMPORALES_SALIDA = [
+    "anio_catastro",
+    "anio_ultima_revision",
+    "anio_catastro_2021",
+    "anio_ultima_revision_catastro_2021",
+    "anio_migracion",
+    "anio_renta",
+    "periodo_viviendas_turisticas",
+    "anio_viviendas_turisticas",
+    "mes_viviendas_turisticas",
+    "anio_criminalidad",
+    "anio_alquiler",
+    "anio",
+]
+
 
 def ruta_local(clave_s3: str) -> Path:
     return RUTA_BASE / Path(clave_s3)
@@ -686,6 +701,11 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
     return resultado
 
 
+def eliminar_metadatos_temporales(df: pd.DataFrame) -> pd.DataFrame:
+    validar_columnas(df, COLUMNAS_TEMPORALES_SALIDA)
+    return df.drop(columns=COLUMNAS_TEMPORALES_SALIDA)
+
+
 def preparar_dataset(nombre: str, df: pd.DataFrame) -> pd.DataFrame:
     if nombre == "catastro":
         return preparar_catastro(df)
@@ -735,6 +755,7 @@ def procesar_datos(datos: dict) -> pd.DataFrame:
         resultado = unir_dataset(resultado, dataset, nombre)
 
     resultado = calcular_variables(resultado)
+    resultado = eliminar_metadatos_temporales(resultado)
     validar_claves(
         resultado,
         ["codigo_ine"],
@@ -756,6 +777,7 @@ def main() -> None:
         resultado = unir_dataset(resultado, dataset, nombre)
 
     resultado = calcular_variables(resultado)
+    resultado = eliminar_metadatos_temporales(resultado)
     validar_claves(
         resultado,
         ["codigo_ine"],

@@ -30,25 +30,6 @@ GROUP BY codigo_ine, municipio
 HAVING COUNT(*) > 1
 ORDER BY repeticiones DESC;
 
--- Periodos incorporados al dataset integrado
-SELECT
-    anio_catastro,
-    anio_catastro_2021,
-    anio_renta,
-    anio_migracion,
-    anio_criminalidad,
-    periodo_viviendas_turisticas,
-    COUNT(*) AS municipios
-FROM integrado
-GROUP BY
-    anio_catastro,
-    anio_catastro_2021,
-    anio_renta,
-    anio_migracion,
-    anio_criminalidad,
-    periodo_viviendas_turisticas
-ORDER BY municipios DESC;
-
 -- Cobertura y valores nulos de las principales fuentes
 SELECT
     COUNT(*) AS municipios_totales,
