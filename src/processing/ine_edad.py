@@ -1,5 +1,6 @@
 '''
-Calcula la edad media municipal de 2025 y sus variaciones a uno y tres años.
+Calcula la edad media municipal de 2025, sus diferencias a uno y tres años y
+los porcentajes de población menor de 18 años y de 65 años o más.
 
 '''
 
@@ -125,10 +126,18 @@ def agregar_bloque(df: pd.DataFrame) -> pd.DataFrame:
     )
 
     resultado["suma_edades"] = resultado["edad"] * resultado["poblacion_edad"]
+    resultado["poblacion_menor_18"] = resultado["poblacion_edad"].where(
+        resultado["edad"].lt(18), 0
+    )
+    resultado["poblacion_65_mas"] = resultado["poblacion_edad"].where(
+        resultado["edad"].ge(65), 0
+    )
     resultado["valor_ausente"] = resultado["poblacion_edad"].isna().astype("int64")
     return resultado.groupby(COLUMNAS_AGREGACION, as_index=False).agg(
         suma_edades=("suma_edades", "sum"),
         poblacion_con_edad=("poblacion_edad", "sum"),
+        poblacion_menor_18=("poblacion_menor_18", "sum"),
+        poblacion_65_mas=("poblacion_65_mas", "sum"),
         observaciones=("edad", "size"),
         valores_ausentes=("valor_ausente", "sum"),
     )
@@ -151,6 +160,8 @@ def procesar_datos(
     resultado = resultado.groupby(COLUMNAS_AGREGACION, as_index=False).agg(
         suma_edades=("suma_edades", "sum"),
         poblacion_con_edad=("poblacion_con_edad", "sum"),
+        poblacion_menor_18=("poblacion_menor_18", "sum"),
+        poblacion_65_mas=("poblacion_65_mas", "sum"),
         observaciones=("observaciones", "sum"),
         valores_ausentes=("valores_ausentes", "sum"),
     )
@@ -162,8 +173,25 @@ def procesar_datos(
     resultado["edad_media"] = (
         resultado["suma_edades"] / resultado["poblacion_con_edad"]
     ).mask(datos_incompletos).round(2).astype("Float64")
+    resultado["porcentaje_poblacion_menor_18"] = (
+        resultado["poblacion_menor_18"]
+        / resultado["poblacion_con_edad"]
+        * 100
+    ).mask(datos_incompletos).round(2).astype("Float64")
+    resultado["porcentaje_poblacion_65_mas"] = (
+        resultado["poblacion_65_mas"]
+        / resultado["poblacion_con_edad"]
+        * 100
+    ).mask(datos_incompletos).round(2).astype("Float64")
 
-    resultado = resultado[[*COLUMNAS_AGREGACION, "edad_media"]]
+    resultado = resultado[
+        [
+            *COLUMNAS_AGREGACION,
+            "edad_media",
+            "porcentaje_poblacion_menor_18",
+            "porcentaje_poblacion_65_mas",
+        ]
+    ]
     validar_claves(
         resultado,
         ["codigo_ine", "anio"],
@@ -181,7 +209,13 @@ def procesar_datos(
 
     edad_referencia = resultado.loc[
         resultado["anio"].eq(ANIO_REFERENCIA),
-        ["codigo_ine", "municipio", "edad_media"],
+        [
+            "codigo_ine",
+            "municipio",
+            "edad_media",
+            "porcentaje_poblacion_menor_18",
+            "porcentaje_poblacion_65_mas",
+        ],
     ].rename(columns={"edad_media": "edad_media_2025"})
     validar_claves(
         edad_referencia,
@@ -219,6 +253,8 @@ def procesar_datos(
         "codigo_ine",
         "municipio",
         "edad_media_2025",
+        "porcentaje_poblacion_menor_18",
+        "porcentaje_poblacion_65_mas",
         "diferencia_edad_media_1_anio",
         "diferencia_edad_media_3_anios",
     ]
@@ -244,6 +280,14 @@ def main() -> None:
     print(
         "Edades medias de 2025 ausentes: "
         f"{df_limpio['edad_media_2025'].isna().sum():,}"
+    )
+    print(
+        "Porcentajes de población menor de 18 años ausentes: "
+        f"{df_limpio['porcentaje_poblacion_menor_18'].isna().sum():,}"
+    )
+    print(
+        "Porcentajes de población de 65 años o más ausentes: "
+        f"{df_limpio['porcentaje_poblacion_65_mas'].isna().sum():,}"
     )
     for numero_anios in HORIZONTES:
         sufijo = "anio" if numero_anios == 1 else "anios"

@@ -432,10 +432,17 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
         [
             "poblacion_2025",
             "variacion_poblacion_1_anio",
+            "porcentaje_poblacion_menor_18",
+            "porcentaje_poblacion_65_mas",
             "saldo_interior",
             "saldo_exterior",
             "viviendas_turisticas",
             "paro_medio_2025",
+            "anio_renta",
+            "renta_neta_media_hogar_eur",
+            "anio_alquiler",
+            "alquiler_precio_colectiva_mediana",
+            "alquiler_precio_unifamiliar_mediana",
             "superficie_km2",
             "superficie_urbana_m2",
             "anio_catastro",
@@ -503,6 +510,25 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
     resultado["paro_por_1000_habitantes"] = (
         resultado["paro_medio_2025"] / poblacion_2025_valida * 1_000
     ).round(2).astype("Float64")
+
+    # Aproximación al esfuerzo de acceso al alquiler con los datos más
+    # recientes de cada fuente: alquiler mediano mensual de 2024 y renta neta
+    # media anual por hogar de 2023. No incluye suministros ni otros gastos
+    # asociados a la vivienda.
+    renta_hogar_valida = resultado["renta_neta_media_hogar_eur"].where(
+        resultado["renta_neta_media_hogar_eur"].gt(0)
+    )
+    tipos_vivienda_alquiler = {
+        "colectiva": "alquiler_precio_colectiva_mediana",
+        "unifamiliar": "alquiler_precio_unifamiliar_mediana",
+    }
+    for tipo_vivienda, columna_alquiler in tipos_vivienda_alquiler.items():
+        resultado[f"esfuerzo_alquiler_{tipo_vivienda}_pct"] = (
+            resultado[columna_alquiler]
+            * 12
+            / renta_hogar_valida
+            * 100
+        ).round(2).astype("Float64")
 
     # La superficie municipal del IGN está expresada en km2 y la superficie
     # urbana del Catastro en m2; 1 km2 equivale a 1.000.000 m2.

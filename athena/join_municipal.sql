@@ -54,6 +54,10 @@ SELECT
     COUNT(*) AS municipios_totales,
     COUNT(*) - COUNT(poblacion_2025) AS nulos_poblacion,
     COUNT(*) - COUNT(edad_media_2025) AS nulos_edad,
+    COUNT(*) - COUNT(porcentaje_poblacion_menor_18)
+        AS nulos_porcentaje_menor_18,
+    COUNT(*) - COUNT(porcentaje_poblacion_65_mas)
+        AS nulos_porcentaje_65_mas,
     COUNT(*) - COUNT(renta_neta_media_persona_eur) AS nulos_renta,
     COUNT(*) - COUNT(tamanio_medio_hogar) AS nulos_tamanio_hogar,
     COUNT(*) - COUNT(saldo_interior) AS nulos_migracion,
@@ -65,7 +69,11 @@ SELECT
     COUNT(*) - COUNT(paro_medio_2025) AS nulos_paro,
     COUNT(*) - COUNT(inmuebles_residenciales) AS nulos_catastro_2026,
     COUNT(*) - COUNT(inmuebles_residenciales_catastro_2021)
-        AS nulos_catastro_2021
+        AS nulos_catastro_2021,
+    COUNT(*) - COUNT(esfuerzo_alquiler_colectiva_pct)
+        AS nulos_esfuerzo_alquiler_colectiva,
+    COUNT(*) - COUNT(esfuerzo_alquiler_unifamiliar_pct)
+        AS nulos_esfuerzo_alquiler_unifamiliar
 FROM integrado;
 
 -- Principales estadísticos de variables municipales y calculadas
@@ -73,6 +81,8 @@ SELECT
     AVG(poblacion_2025) AS poblacion_media,
     approx_percentile(poblacion_2025, 0.5) AS poblacion_mediana,
     AVG(edad_media_2025) AS edad_media,
+    AVG(porcentaje_poblacion_menor_18) AS porcentaje_menor_18_medio,
+    AVG(porcentaje_poblacion_65_mas) AS porcentaje_65_mas_medio,
     AVG(renta_neta_media_persona_eur) AS renta_persona_media,
     approx_percentile(renta_neta_media_persona_eur, 0.5)
         AS renta_persona_mediana,
@@ -89,6 +99,14 @@ SELECT
         AS alquiler_unifamiliar_eur_m2_medio,
     approx_percentile(alquiler_unifamiliar_aproximado_eur_m2, 0.5)
         AS alquiler_unifamiliar_eur_m2_mediana,
+    AVG(esfuerzo_alquiler_colectiva_pct)
+        AS esfuerzo_alquiler_colectiva_medio,
+    approx_percentile(esfuerzo_alquiler_colectiva_pct, 0.5)
+        AS esfuerzo_alquiler_colectiva_mediano,
+    AVG(esfuerzo_alquiler_unifamiliar_pct)
+        AS esfuerzo_alquiler_unifamiliar_medio,
+    approx_percentile(esfuerzo_alquiler_unifamiliar_pct, 0.5)
+        AS esfuerzo_alquiler_unifamiliar_mediano,
     AVG(paro_por_1000_habitantes) AS paro_por_1000_media,
     AVG(porcentaje_superficie_urbana) AS superficie_urbana_porcentaje_medio,
     AVG(inmuebles_residenciales_por_1000_habitantes)
@@ -151,6 +169,10 @@ FROM integrado;
 SELECT *
 FROM integrado
 WHERE poblacion_2025 <= 0
+   OR porcentaje_poblacion_menor_18 NOT BETWEEN 0 AND 100
+   OR porcentaje_poblacion_65_mas NOT BETWEEN 0 AND 100
+   OR porcentaje_poblacion_menor_18
+      + porcentaje_poblacion_65_mas > 100
    OR superficie_km2 <= 0
    OR viviendas_totales < 0
    OR viviendas_vacias < 0
@@ -166,6 +188,8 @@ WHERE poblacion_2025 <= 0
    OR porcentaje_viviendas_turisticas_sobre_inmuebles_residenciales < 0
    OR alquiler_colectiva_aproximado_eur_m2 < 0
    OR alquiler_unifamiliar_aproximado_eur_m2 < 0
+   OR esfuerzo_alquiler_colectiva_pct < 0
+   OR esfuerzo_alquiler_unifamiliar_pct < 0
    OR inmuebles_residenciales < 0
    OR porcentaje_superficie_urbana < 0
    OR distancia_costa_km < 0;

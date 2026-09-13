@@ -28,12 +28,22 @@ SELECT
     AVG(diferencia_edad_media_1_anio) AS diferencia_1_anio_media,
     MIN(diferencia_edad_media_3_anios) AS diferencia_3_anios_minima,
     MAX(diferencia_edad_media_3_anios) AS diferencia_3_anios_maxima,
-    AVG(diferencia_edad_media_3_anios) AS diferencia_3_anios_media
+    AVG(diferencia_edad_media_3_anios) AS diferencia_3_anios_media,
+    AVG(porcentaje_poblacion_menor_18) AS porcentaje_menor_18_medio,
+    approx_percentile(porcentaje_poblacion_menor_18, 0.5)
+        AS porcentaje_menor_18_mediano,
+    AVG(porcentaje_poblacion_65_mas) AS porcentaje_65_mas_medio,
+    approx_percentile(porcentaje_poblacion_65_mas, 0.5)
+        AS porcentaje_65_mas_mediano
 FROM ine_edad;
 
 -- Edades fuera del rango posible
 SELECT *
 FROM ine_edad
 WHERE edad_media_2025 NOT BETWEEN 0 AND 100
+   OR porcentaje_poblacion_menor_18 NOT BETWEEN 0 AND 100
+   OR porcentaje_poblacion_65_mas NOT BETWEEN 0 AND 100
+   OR porcentaje_poblacion_menor_18
+      + porcentaje_poblacion_65_mas > 100
    OR ABS(diferencia_edad_media_1_anio) > 100
    OR ABS(diferencia_edad_media_3_anios) > 100;
