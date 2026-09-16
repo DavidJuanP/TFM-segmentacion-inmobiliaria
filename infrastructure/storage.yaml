@@ -305,7 +305,7 @@ Resources:
                   - s3:GetObjectVersion
                 Resource: !Sub "${ProcessedDataBucket.Arn}/integrado/*"
 
-  RedshiftNamespace:
+  RedshiftCuratedNamespace:
     Type: AWS::RedshiftServerless::Namespace
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -323,11 +323,11 @@ Resources:
         - Key: Project
           Value: tfm
 
-  RedshiftWorkgroup:
+  RedshiftCuratedWorkgroup:
     Type: AWS::RedshiftServerless::Workgroup
     Properties:
       WorkgroupName: !Ref RedshiftWorkgroupName
-      NamespaceName: !Ref RedshiftNamespace
+      NamespaceName: !Ref RedshiftCuratedNamespace
       BaseCapacity: !Ref RedshiftBaseCapacity
       MaxCapacity: !Ref RedshiftBaseCapacity
       EnhancedVpcRouting: false
@@ -416,11 +416,15 @@ Outputs:
 
   RedshiftNamespaceNameOutput:
     Description: Nombre del namespace de Redshift Serverless.
-    Value: !Ref RedshiftNamespace
+    Value: !Ref RedshiftCuratedNamespace
+    Export:
+      Name: !Sub "${AWS::StackName}-RedshiftCuratedNamespaceNameOutput"
 
   RedshiftWorkgroupNameOutput:
     Description: Nombre del workgroup de Redshift Serverless.
-    Value: !Ref RedshiftWorkgroup
+    Value: !Ref RedshiftCuratedWorkgroup
+    Export:
+      Name: !Sub "${AWS::StackName}-RedshiftCuratedWorkgroupNameOutput"
 
   RedshiftDatabaseNameOutput:
     Description: Nombre de la base de datos de la capa curated.
