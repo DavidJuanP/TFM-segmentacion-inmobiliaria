@@ -12,10 +12,8 @@ CREATE TABLE curated.municipios (
       longitud DOUBLE PRECISION,
       latitud DOUBLE PRECISION,
 
-      anio_catastro DOUBLE PRECISION,
       codigo_comunidad VARCHAR(2),
       codigo_provincia VARCHAR(2),
-      anio_ultima_revision DOUBLE PRECISION,
       inmuebles_urbanos BIGINT,
       valor_catastral_total_eur DOUBLE PRECISION,
       valor_catastral_suelo_eur DOUBLE PRECISION,
@@ -26,8 +24,6 @@ CREATE TABLE curated.municipios (
       valor_catastral_suelo_eur_m2 DOUBLE PRECISION,
       valor_catastral_residencial_medio_eur DOUBLE PRECISION,
 
-      anio_catastro_2021 DOUBLE PRECISION,
-      anio_ultima_revision_catastro_2021 DOUBLE PRECISION,
       inmuebles_urbanos_catastro_2021 BIGINT,
       valor_catastral_total_eur_catastro_2021 DOUBLE PRECISION,
       valor_catastral_suelo_eur_catastro_2021 DOUBLE PRECISION,
@@ -44,7 +40,6 @@ CREATE TABLE curated.municipios (
       diferencia_edad_media_1_anio DOUBLE PRECISION,
       diferencia_edad_media_3_anios DOUBLE PRECISION,
 
-      anio_migracion SMALLINT,
       saldo_total BIGINT,
       saldo_interior BIGINT,
       saldo_exterior BIGINT,
@@ -54,7 +49,6 @@ CREATE TABLE curated.municipios (
       variacion_poblacion_3_anios DOUBLE PRECISION,
       variacion_poblacion_5_anios DOUBLE PRECISION,
 
-      anio_renta BIGINT,
       renta_neta_media_persona_eur BIGINT,
       renta_neta_media_hogar_eur BIGINT,
 
@@ -66,19 +60,14 @@ CREATE TABLE curated.municipios (
       porcentaje_viviendas_vacias DOUBLE PRECISION,
       porcentaje_viviendas_uso_esporadico DOUBLE PRECISION,
 
-      periodo_viviendas_turisticas VARCHAR(20),
-      anio_viviendas_turisticas DOUBLE PRECISION,
-      mes_viviendas_turisticas DOUBLE PRECISION,
       viviendas_turisticas BIGINT,
       plazas BIGINT,
       plazas_por_vivienda DOUBLE PRECISION,
 
-      anio_criminalidad DOUBLE PRECISION,
       total_infracciones BIGINT,
 
       distancia_costa_km DOUBLE PRECISION,
 
-      anio_alquiler DOUBLE PRECISION,
       alquiler_precio_colectiva_mediana DOUBLE PRECISION,
       alquiler_precio_colectiva_rango_intercuartilico DOUBLE PRECISION,
       alquiler_precio_unifamiliar_mediana DOUBLE PRECISION,
@@ -116,7 +105,6 @@ CREATE TABLE curated.municipios (
       transacciones_nuevas_2025 BIGINT,
       transacciones_segunda_mano_2025 BIGINT,
 
-      anio DOUBLE PRECISION,
       paro_medio_2025 DOUBLE PRECISION,
 
       saldo_interior_por_1000_habitantes DOUBLE PRECISION,
@@ -173,7 +161,7 @@ SELECT table_schema, table_name
     WHERE table_schema = 'curated'
     AND table_name = 'municipios';
 
--- 19.4 ms elapsed time
+-- 21.4 ms elapsed time
 COPY curated.municipios
   FROM 's3://s3-tfm-processed-data-159012148774-eu-west-3/integrado/municipios.parquet'
   IAM_ROLE default
