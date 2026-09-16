@@ -29,11 +29,12 @@ Parameters:
 
   RedshiftBaseCapacity:
     Type: Number
-    Default: 32
+    Default: 8
     AllowedValues:
+      - 8
+      - 16
+      - 24
       - 32
-      - 64
-      - 128
     Description: Capacidad base y máxima del workgroup, expresada en RPUs.
 
 
@@ -305,7 +306,7 @@ Resources:
                   - s3:GetObjectVersion
                 Resource: !Sub "${ProcessedDataBucket.Arn}/integrado/*"
 
-  RedshiftCuratedNamespace:
+  RedshiftNamespace:
     Type: AWS::RedshiftServerless::Namespace
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
@@ -323,11 +324,11 @@ Resources:
         - Key: Project
           Value: tfm
 
-  RedshiftCuratedWorkgroup:
+  RedshiftWorkgroup:
     Type: AWS::RedshiftServerless::Workgroup
     Properties:
       WorkgroupName: !Ref RedshiftWorkgroupName
-      NamespaceName: !Ref RedshiftCuratedNamespace
+      NamespaceName: !Ref RedshiftNamespace
       BaseCapacity: !Ref RedshiftBaseCapacity
       MaxCapacity: !Ref RedshiftBaseCapacity
       EnhancedVpcRouting: false
@@ -416,15 +417,11 @@ Outputs:
 
   RedshiftNamespaceNameOutput:
     Description: Nombre del namespace de Redshift Serverless.
-    Value: !Ref RedshiftCuratedNamespace
-    Export:
-      Name: !Sub "${AWS::StackName}-RedshiftCuratedNamespaceNameOutput"
+    Value: !Ref RedshiftNamespace
 
   RedshiftWorkgroupNameOutput:
     Description: Nombre del workgroup de Redshift Serverless.
-    Value: !Ref RedshiftCuratedWorkgroup
-    Export:
-      Name: !Sub "${AWS::StackName}-RedshiftCuratedWorkgroupNameOutput"
+    Value: !Ref RedshiftWorkgroup
 
   RedshiftDatabaseNameOutput:
     Description: Nombre de la base de datos de la capa curated.
@@ -432,11 +429,11 @@ Outputs:
 
   RedshiftEndpointAddress:
     Description: Endpoint privado del workgroup de Redshift Serverless.
-    Value: !GetAtt RedshiftCuratedWorkgroup.Workgroup.Endpoint.Address
+    Value: !GetAtt RedshiftWorkgroup.Workgroup.Endpoint.Address
 
   RedshiftEndpointPort:
     Description: Puerto del workgroup de Redshift Serverless.
-    Value: "5439"
+    Value: !GetAtt RedshiftWorkgroup.Workgroup.Endpoint.Port
 
   RedshiftDefaultIamRoleArn:
     Description: Rol predeterminado para COPY desde el bucket processed.
