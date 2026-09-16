@@ -432,7 +432,7 @@ Outputs:
 
   RedshiftEndpointAddress:
     Description: Endpoint privado del workgroup de Redshift Serverless.
-    Value: !GetAtt RedshiftWorkgroup.Workgroup.Endpoint.Address
+    Value: !GetAtt RedshiftCuratedWorkgroup.Workgroup.Endpoint.Address
 
   RedshiftEndpointPort:
     Description: Puerto del workgroup de Redshift Serverless.
