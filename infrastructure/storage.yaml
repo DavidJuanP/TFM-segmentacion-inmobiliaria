@@ -430,7 +430,7 @@ Outputs:
 
   RedshiftEndpointPort:
     Description: Puerto del workgroup de Redshift Serverless.
-    Value: !GetAtt RedshiftWorkgroup.Workgroup.Endpoint.Port
+    Value: "5439"
 
   RedshiftDefaultIamRoleArn:
     Description: Rol predeterminado para COPY desde el bucket processed.
