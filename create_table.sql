@@ -24,16 +24,6 @@ CREATE TABLE curated.municipios (
       valor_catastral_suelo_eur_m2 DOUBLE PRECISION,
       valor_catastral_residencial_medio_eur DOUBLE PRECISION,
 
-      inmuebles_urbanos_catastro_2021 BIGINT,
-      valor_catastral_total_eur_catastro_2021 DOUBLE PRECISION,
-      valor_catastral_suelo_eur_catastro_2021 DOUBLE PRECISION,
-      superficie_urbana_m2_catastro_2021 BIGINT,
-      parcelas_urbanas_catastro_2021 BIGINT,
-      inmuebles_residenciales_catastro_2021 BIGINT,
-      valor_catastral_residencial_eur_catastro_2021 DOUBLE PRECISION,
-      valor_catastral_suelo_eur_m2_catastro_2021 DOUBLE PRECISION,
-      valor_catastral_residencial_medio_eur_catastro_2021 DOUBLE PRECISION,
-
       edad_media_2025 DOUBLE PRECISION,
       porcentaje_poblacion_menor_18 DOUBLE PRECISION,
       porcentaje_poblacion_65_mas DOUBLE PRECISION,
@@ -161,7 +151,7 @@ SELECT table_schema, table_name
     WHERE table_schema = 'curated'
     AND table_name = 'municipios';
 
--- 21.4 ms elapsed time
+-- 21.5 ms elapsed time
 COPY curated.municipios
   FROM 's3://s3-tfm-processed-data-159012148774-eu-west-3/integrado/municipios.parquet'
   IAM_ROLE default

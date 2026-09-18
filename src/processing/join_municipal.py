@@ -123,6 +123,21 @@ COLUMNAS_TEMPORALES_SALIDA = [
     "anio",
 ]
 
+# Las métricas históricas del Catastro se necesitan para calcular las
+# variaciones 2021-2026, pero no se conservan en el dataset integrado final.
+COLUMNAS_CATASTRO_2021_AUXILIARES = [
+    f"{columna}_catastro_2021"
+    for columna in COLUMNAS_CATASTRO_METRICAS
+]
+COLUMNAS_AUXILIARES_SALIDA = list(
+    dict.fromkeys(
+        [
+            *COLUMNAS_TEMPORALES_SALIDA,
+            *COLUMNAS_CATASTRO_2021_AUXILIARES,
+        ]
+    )
+)
+
 
 def ruta_local(clave_s3: str) -> Path:
     return RUTA_BASE / Path(clave_s3)
@@ -701,9 +716,9 @@ def calcular_variables(df: pd.DataFrame) -> pd.DataFrame:
     return resultado
 
 
-def eliminar_metadatos_temporales(df: pd.DataFrame) -> pd.DataFrame:
-    validar_columnas(df, COLUMNAS_TEMPORALES_SALIDA)
-    return df.drop(columns=COLUMNAS_TEMPORALES_SALIDA)
+def eliminar_columnas_auxiliares(df: pd.DataFrame) -> pd.DataFrame:
+    validar_columnas(df, COLUMNAS_AUXILIARES_SALIDA)
+    return df.drop(columns=COLUMNAS_AUXILIARES_SALIDA)
 
 
 def preparar_dataset(nombre: str, df: pd.DataFrame) -> pd.DataFrame:
@@ -755,7 +770,7 @@ def procesar_datos(datos: dict) -> pd.DataFrame:
         resultado = unir_dataset(resultado, dataset, nombre)
 
     resultado = calcular_variables(resultado)
-    resultado = eliminar_metadatos_temporales(resultado)
+    resultado = eliminar_columnas_auxiliares(resultado)
     validar_claves(
         resultado,
         ["codigo_ine"],
@@ -777,7 +792,7 @@ def main() -> None:
         resultado = unir_dataset(resultado, dataset, nombre)
 
     resultado = calcular_variables(resultado)
-    resultado = eliminar_metadatos_temporales(resultado)
+    resultado = eliminar_columnas_auxiliares(resultado)
     validar_claves(
         resultado,
         ["codigo_ine"],
