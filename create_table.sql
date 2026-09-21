@@ -151,7 +151,7 @@ SELECT table_schema, table_name
     WHERE table_schema = 'curated'
     AND table_name = 'municipios';
 
--- 21.5 ms elapsed time
+-- 19.4 ms elapsed time
 COPY curated.municipios
   FROM 's3://s3-tfm-processed-data-159012148774-eu-west-3/integrado/municipios.parquet'
   IAM_ROLE default
