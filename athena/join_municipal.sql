@@ -49,8 +49,8 @@ SELECT
     COUNT(*) - COUNT(transacciones_2025) AS nulos_transacciones,
     COUNT(*) - COUNT(paro_medio_2025) AS nulos_paro,
     COUNT(*) - COUNT(inmuebles_residenciales) AS nulos_catastro_2026,
-    COUNT(*) - COUNT(inmuebles_residenciales_catastro_2021)
-        AS nulos_catastro_2021,
+    COUNT(*) - COUNT(variacion_inmuebles_residenciales_5_anios)
+        AS nulos_variacion_catastro_2021_2026,
     COUNT(*) - COUNT(esfuerzo_alquiler_colectiva_pct)
         AS nulos_esfuerzo_alquiler_colectiva,
     COUNT(*) - COUNT(esfuerzo_alquiler_unifamiliar_pct)
