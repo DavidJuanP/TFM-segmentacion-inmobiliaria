@@ -1,0 +1,23 @@
+CAPÍTULO 3. OBJETIVOS
+
+3.1 Objetivo general
+
+El objetivo general de este Trabajo Fin de Máster es construir y validar una segmentación de los municipios españoles incluidos en el ámbito del estudio a partir de sus características demográficas, socioeconómicas, territoriales e inmobiliarias. Para ello, se integran datos públicos procedentes de diferentes organismos y se aplican técnicas de aprendizaje automático no supervisado que permitan identificar grupos de municipios internamente semejantes y diferenciados del resto.
+
+La finalidad de esta segmentación es obtener una tipología municipal que facilite el análisis de la heterogeneidad del mercado inmobiliario español. Los grupos obtenidos deben ser estadísticamente consistentes, estables ante variaciones de la muestra e interpretables mediante las variables originales. El trabajo no pretende predecir el precio de la vivienda ni establecer relaciones causales, sino reconocer estructuras y perfiles comunes que ayuden a comprender cómo se distribuyen las distintas dinámicas inmobiliarias en el territorio.
+
+Este objetivo comprende tanto la construcción de la base de datos como su explotación analítica. Por ello, el proyecto incluye el diseño de una arquitectura reproducible en AWS, la preparación e integración de las fuentes, el entrenamiento y validación de los modelos y la presentación de los resultados mediante herramientas de consulta y visualización.
+
+3.2 Objetivos específicos
+
+Para alcanzar el objetivo general se establecen los siguientes objetivos específicos:
+
+1. Establecer el marco conceptual y metodológico del proyecto mediante la revisión de trabajos sobre segmentación territorial, submercados inmobiliarios, reducción de dimensionalidad y aprendizaje automático no supervisado. Esta revisión debe permitir justificar la elección de las técnicas utilizadas y situar el trabajo dentro de los estudios previos sobre el mercado inmobiliario.
+
+4. Automatizar, siempre que la fuente lo permita, la descarga y conservación de los archivos originales mediante scripts de ingesta. Estos procesos deben mantener los datos sin transformar en la capa raw de Amazon S3 y conservar una estructura de almacenamiento que permita identificar su procedencia.
+
+8. Analizar la calidad y las características del conjunto integrado antes del modelado. El análisis exploratorio debe revisar la integridad de las claves, la cobertura de las fuentes, los valores ausentes, las distribuciones, los valores extremos y la correlación entre variables. Sus resultados deben servir para justificar las decisiones adoptadas durante la selección y el preprocesamiento.
+
+13. Validar las soluciones obtenidas mediante criterios complementarios. La selección de los modelos finales debe considerar métricas internas de cohesión y separación, el tamaño y equilibrio de los grupos, la presencia de observaciones clasificadas como ruido, la estabilidad por remuestreo y el grado de acuerdo entre algoritmos. La elección no debe depender de una única métrica, sino del comportamiento conjunto de la solución y de su utilidad interpretativa.
+
+14. Caracterizar e interpretar los segmentos resultantes mediante las variables originales. El análisis debe identificar qué indicadores diferencian cada grupo, describir sus perfiles demográficos, territoriales, socioeconómicos e inmobiliarios y estudiar su distribución geográfica sin imponer restricciones espaciales durante el entrenamiento.

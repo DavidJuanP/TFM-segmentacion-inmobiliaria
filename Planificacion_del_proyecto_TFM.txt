@@ -1,0 +1,97 @@
+1.1 Planificación del proyecto
+
+El proyecto se desarrolló de forma incremental entre julio y octubre de 2026. La planificación inicial se organizó alrededor de las fases habituales de un proyecto de datos —estudio, adquisición, transformación, integración, análisis y presentación de resultados—, aunque durante su ejecución fue necesario revisar varias decisiones técnicas. En particular, la heterogeneidad de las fuentes, los cambios de formato de algunos organismos y la adaptación de los procesos al entorno de AWS obligaron a solapar actividades y a introducir ciclos adicionales de validación y corrección.
+
+El esfuerzo indicado a continuación representa una estimación razonada del trabajo efectivo realizado, reconstruida a partir de los entregables, los scripts, los notebooks y la evolución del repositorio. El esfuerzo total estimado es de 300 horas.
+
+Cronograma de actividades
+
+N.º | Periodo aproximado       | Actividad                                                   | Esfuerzo
+----|--------------------------|-------------------------------------------------------------|---------
+1   | 11-17 de julio           | Definición del problema, alcance y organización inicial     | 3 h
+2   | Julio-octubre            | Reuniones de seguimiento con el tutor                       | 2 h
+3   | 11-31 de julio           | Estudio del estado del arte y revisión de trabajos previos  | 20 h
+4   | 17 de julio-23 de agosto | Búsqueda, evaluación y contraste de fuentes de datos        | 24 h
+5   | 17 de julio-9 de agosto  | Diseño de la arquitectura y preparación del repositorio     | 12 h
+6   | 27 de julio-3 de septiembre | Desarrollo de los procesos de ingesta                    | 24 h
+7   | 7 de agosto-13 de septiembre | Limpieza, homogeneización y transformación de datos      | 38 h
+8   | 21 de agosto-13 de septiembre | Despliegue y automatización de la plataforma en AWS       | 32 h
+9   | 4-13 de septiembre       | Validación, integración municipal y carga en Redshift       | 24 h
+10  | 13-17 de septiembre      | Análisis exploratorio de los datos                          | 16 h
+11  | 17-23 de septiembre      | Selección y preparación de variables                        | 20 h
+12  | 20-29 de septiembre      | Entrenamiento y validación de los modelos de clustering     | 24 h
+13  | 23 de septiembre-4 de octubre | Interpretación y comparación de resultados             | 12 h
+14  | 26 de septiembre         | Elaboración del cuadro de mando en Power BI                  | 2 h
+15  | Agosto-9 de octubre      | Redacción y actualización de la memoria                     | 35 h
+16  | 29 de septiembre-9 de octubre | Pruebas finales, revisión y comprobación de reproducibilidad | 12 h
+    |                          | TOTAL                                                       | 300 h
+
+Las fechas anteriores representan el periodo principal de cada actividad. Algunas tareas, como la documentación, las pruebas y las reuniones de seguimiento, se realizaron de manera transversal y no únicamente en un momento aislado. Del mismo modo, el procesamiento y el despliegue en AWS se desarrollaron de forma iterativa: los resultados de las comprobaciones realizadas en Athena y en los notebooks dieron lugar a ajustes posteriores en los scripts y en las variables calculadas.
+
+Descripción de las actividades realizadas
+
+1. Definición del problema, alcance y organización inicial (3 horas)
+
+La primera actividad consistió en concretar el propósito del trabajo: construir una segmentación de los municipios españoles basada en características demográficas, socioeconómicas, territoriales e inmobiliarias. Se delimitó el nivel de análisis municipal, se identificaron las principales restricciones del proyecto y se organizó el repositorio en áreas diferenciadas para datos, código fuente, infraestructura, consultas y notebooks. En esta fase también se celebró una reunión informativa inicial.
+
+2. Reuniones de seguimiento con el tutor (2 horas)
+
+Se mantuvieron reuniones de seguimiento destinadas a revisar el alcance, comprobar la evolución del proyecto y orientar las decisiones metodológicas. Estas sesiones permitieron contrastar la estructura del trabajo, la selección de fuentes y el planteamiento de la segmentación. No se realizaron entrevistas con empresas ni con otras entidades, ya que el proyecto se apoya en datos públicos y no requiere trabajo de campo.
+
+3. Estudio del estado del arte y revisión de trabajos previos (20 horas)
+
+Se revisaron conceptos relacionados con la segmentación territorial y el mercado inmobiliario, así como las técnicas de aprendizaje no supervisado aplicables al problema. Esta actividad incluyó el estudio de métodos de normalización, reducción de dimensionalidad, selección de variables, evaluación interna de agrupamientos y análisis de estabilidad. También se examinaron informes y publicaciones de organismos oficiales para comprender el significado, las limitaciones y la comparabilidad de los indicadores utilizados.
+
+4. Búsqueda, evaluación y contraste de fuentes de datos (24 horas)
+
+Se localizaron y evaluaron conjuntos de datos procedentes del INE, MIVAU, IGN, Catastro, Ministerio del Interior, Ministerio de Transportes y Movilidad Sostenible y SEPE. Para cada fuente se revisaron su granularidad territorial, cobertura municipal, periodo disponible, frecuencia de actualización, formato, definición de las variables y presencia de valores ausentes. Una parte relevante del esfuerzo se dedicó a comprobar si los datos podían relacionarse mediante el código INE y a detectar conjuntos con cobertura limitada a determinados municipios, como ocurre con algunos indicadores de alquiler o criminalidad.
+
+5. Diseño de la arquitectura y preparación del repositorio (12 horas)
+
+Se diseñó una arquitectura de datos por capas. La capa raw conserva en Amazon S3 los ficheros obtenidos de las fuentes originales; la capa processed almacena en Parquet los resultados ya depurados y homogeneizados; y la capa curated se materializa en Amazon Redshift Serverless para su explotación analítica. También se definieron los componentes de orquestación y procesamiento con AWS Glue, las consultas de comprobación en Athena, el trabajo analítico en notebooks y la visualización final en Power BI. Paralelamente, se estableció la estructura modular del código y el control de versiones con Git.
+
+6. Desarrollo de los procesos de ingesta (24 horas)
+
+Se implementaron scripts independientes para descargar y almacenar los distintos ficheros de origen. Los procesos abarcan información municipal, población, edad, migraciones, renta, tamaño del hogar, viviendas, viviendas turísticas, paro, criminalidad, ocupación, alquiler, Catastro y transacciones inmobiliarias. Posteriormente, los scripts se adaptaron para ejecutarse en AWS y escribir directamente en el bucket de datos raw. Esta fase incluyó el tratamiento de distintos formatos —CSV, XLS y XLSX—, la definición de rutas homogéneas y la gestión de incidencias ocasionadas por la disponibilidad temporal de algunos servicios externos.
+
+7. Limpieza, homogeneización y transformación de datos (38 horas)
+
+Se desarrolló un proceso de transformación específico para cada fuente. Las principales operaciones fueron la normalización del código INE, la conversión de tipos, el tratamiento de separadores y valores no numéricos, la eliminación de columnas irrelevantes, la selección del periodo más reciente y la agregación de registros cuando la fuente presentaba una granularidad inferior al municipio-año. También se calcularon indicadores derivados, como variaciones de población y transacciones, diferencias de edad, tasas por cada mil habitantes o inmuebles, porcentajes de viviendas vacías y turísticas, esfuerzo de alquiler, densidad de población y métricas catastrales. Los resultados se almacenaron en formato Parquet para reducir el volumen y facilitar las consultas analíticas.
+
+8. Despliegue y automatización de la plataforma en AWS (32 horas)
+
+Se prepararon plantillas de infraestructura como código para crear los buckets de S3, los trabajos y flujos de AWS Glue, el catálogo de datos, los recursos de Athena y el entorno de Redshift Serverless. Además, se configuraron los buildspec utilizados por CodeBuild y el flujo de despliegue. Esta actividad requirió varias iteraciones para resolver problemas reales de ejecución, entre ellos rutas incorrectas en S3, empaquetado e importación de módulos Python, variables de entorno ausentes, diferencias entre versiones de Python, nombres de columnas no coincidentes y conflictos de recursos durante el despliegue de CloudFormation.
+
+9. Validación, integración municipal y carga en Redshift (24 horas)
+
+Antes de integrar las fuentes se elaboraron consultas SQL de Athena para comprobar el esquema, la cobertura, los valores nulos, los rangos temporales y la unicidad de las claves. A continuación, se creó un trabajo de Glue encargado de unir los ficheros procesados mediante el código INE y de generar indicadores que dependen de variables procedentes de varias fuentes. La tabla resultante mantiene una fila por municipio. Finalmente, se definió la tabla de destino y se verificó la carga de 8.132 municipios en Redshift, corrigiendo previamente incompatibilidades de longitud y tipos de datos.
+
+10. Análisis exploratorio de los datos (16 horas)
+
+El análisis exploratorio se realizó en notebooks de Python. Se estudió la cobertura de cada fuente, la distribución de las variables, la presencia de valores extremos, las relaciones entre valores ausentes y tamaño de población, y la correlación entre indicadores. Este análisis permitió identificar variables con cobertura insuficiente, redundancias y diferencias importantes entre municipios de distinta dimensión. Sus resultados sirvieron para definir dos universos de análisis: uno general, con mayor cobertura territorial, y otro específico, enriquecido con variables inmobiliarias disponibles para un subconjunto de municipios.
+
+11. Selección y preparación de variables (20 horas)
+
+Se revisó qué variables debían intervenir en la segmentación y cuáles tenían que conservarse únicamente como identificadores o elementos descriptivos. Se eliminaron campos temporales, variables auxiliares, recuentos redundantes y métricas con información solapada. También se trataron los valores ausentes y las distribuciones asimétricas, se estandarizaron las variables y se aplicó análisis de componentes principales para reducir la dimensionalidad y evitar que los indicadores altamente correlacionados dominaran el resultado.
+
+12. Entrenamiento y validación de los modelos de clustering (24 horas)
+
+Se probaron distintas configuraciones de agrupamiento sobre los datos preparados. La selección no se basó únicamente en una métrica, sino en la combinación de indicadores de calidad interna, estabilidad de los grupos, tamaño de los clústeres y utilidad interpretativa. Se analizaron diferentes números de grupos y se compararon los resultados obtenidos para los dos universos municipales. Esta fase incluyó la revisión de municipios representativos y casos atípicos para comprobar que la solución fuera coherente con el objetivo del trabajo.
+
+13. Interpretación y comparación de resultados (12 horas)
+
+Una vez seleccionadas las configuraciones finales, se elaboraron perfiles para cada clúster mediante estadísticas descriptivas y comparaciones entre grupos. Se estudiaron las características demográficas, económicas, urbanas, inmobiliarias y territoriales que distinguen cada segmento. También se prepararon tablas y gráficos para explicar los resultados sin depender exclusivamente de las componentes principales o de las etiquetas numéricas producidas por el algoritmo.
+
+14. Elaboración del cuadro de mando en Power BI (2 horas)
+
+Se construyó un cuadro de mando para facilitar la exploración de los resultados de la segmentación. La visualización permite localizar los municipios, comparar sus perfiles y observar la distribución territorial de los clústeres. El objetivo del dashboard no fue sustituir el análisis estadístico de los notebooks, sino ofrecer una representación accesible y útil de sus conclusiones principales.
+
+15. Redacción y actualización de la memoria (35 horas)
+
+La memoria se redactó de forma progresiva a medida que avanzaba el proyecto. Se documentaron el contexto, los objetivos, las fuentes, la arquitectura, las decisiones de procesamiento, la metodología de análisis y los resultados. Asimismo, se revisó la terminología para diferenciar correctamente la ingesta, el procesamiento por fuente, la integración, la capa curated y el modelado. Las figuras, tablas y explicaciones se actualizaron para mantener la correspondencia entre la memoria y la implementación final.
+
+16. Pruebas finales, revisión y comprobación de reproducibilidad (12 horas)
+
+La última actividad consistió en revisar de extremo a extremo el proyecto. Se comprobaron los scripts, las rutas de entrada y salida, las plantillas de infraestructura, las consultas SQL y la coherencia entre los notebooks. También se revisó que las variables empleadas en los modelos coincidieran con las generadas por el proceso de integración y que los resultados pudieran reproducirse tanto en local como en el entorno de AWS. Finalmente, se corrigieron duplicidades, referencias obsoletas y discrepancias entre la documentación y el repositorio.
+
+En conjunto, la planificación refleja un proyecto iterativo en el que la construcción de la plataforma de datos y el análisis estadístico estuvieron estrechamente relacionados. La mayor parte del esfuerzo se concentró en la preparación e integración de información heterogénea y en la adaptación de los procesos a AWS, aspectos imprescindibles para que la segmentación final se apoyara en datos comparables, trazables y reproducibles.
