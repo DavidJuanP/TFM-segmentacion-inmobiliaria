@@ -1,6 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
-Description: Jobs de AWS Glue para ejecutar los scripts de procesamiento del TFM.
+Description: 
+  Jobs de AWS Glue para ejecutar los scripts de procesamiento del TFM.
+  Autor: David Juan Pascasio
 
 Parameters:
   ProjectName:
